@@ -9,10 +9,14 @@ using Binance.Net.ClientWPF.MVVM;
 using Binance.Net.ClientWPF.ViewModels;
 using Binance.Net.ClientWPF.UserControls;
 using Binance.Net.ClientWPF.MessageBox;
+using System.IO;
+
+using TicTacTec.TA.Library;
+using System;
 
 namespace Binance.Net.ClientWPF
 {
-    public class MainViewModel: ObservableObject
+    public class MainViewModel : ObservableObject
     {
         private ObservableCollection<BinanceSymbolViewModel> allPrices;
         public ObservableCollection<BinanceSymbolViewModel> AllPrices
@@ -74,7 +78,7 @@ namespace Binance.Net.ClientWPF
                 RaisePropertyChangedEvent("ApiKey");
 
                 if (value != null && apiSecret != null)
-                    BinanceDefaults.SetDefaultApiCredentials(value, apiSecret);         
+                    BinanceDefaults.SetDefaultApiCredentials(value, apiSecret);
             }
         }
 
@@ -104,8 +108,31 @@ namespace Binance.Net.ClientWPF
         private object orderLock;
         private BinanceSocketClient socketClient;
 
+
+        Dictionary<string, string> mainConfig;
+
         public MainViewModel()
         {
+            // Load key and secret
+            string configLocation = "config.ini";
+            if (File.Exists(configLocation))
+            {
+                mainConfig = File.ReadAllLines(configLocation).ToDictionary(line => line.Split('=')[0], line => line.Split('=')[1].Trim());
+                var apiKey = mainConfig.GetValue("APIKey");
+                var apiSecret = mainConfig.GetValue("APISecret");
+                if (!string.IsNullOrWhiteSpace(apiKey))
+                    ApiKey = apiKey;
+                if (!string.IsNullOrWhiteSpace(apiSecret))
+                    ApiSecret = apiSecret;
+            }
+            else
+            {
+                mainConfig = new Dictionary<string, string>();
+                mainConfig.Add("APIKey", "");
+                mainConfig.Add("APISecret", "");
+                File.WriteAllLines(configLocation, mainConfig.Select(kvp => $"{kvp.Key}={kvp.Value}").ToList());
+            }
+
             // Should be done with DI
             messageBoxService = new MessageBoxService();
             orderLock = new object();
@@ -116,7 +143,7 @@ namespace Binance.Net.ClientWPF
             SettingsCommand = new DelegateCommand(Settings);
             CloseSettingsCommand = new DelegateCommand(CloseSettings);
 
-            Task.Run(() => GetAllSymbols());            
+            Task.Run(() => GetAllSymbols());
         }
 
         public void Cancel(object o)
@@ -204,6 +231,24 @@ namespace Binance.Net.ClientWPF
             Task.WaitAll(tasks.ToArray());
         }
 
+        private void GetHistory()
+        {
+            if (SelectedSymbol == null)
+                return;
+
+            using (var client = new BinanceClient())
+            {
+                DateTime now = DateTime.Now;
+                var start = now - new TimeSpan(24, 0, 0);
+
+                SelectedSymbol.KlineInterval = KlineInterval.OneHour;
+
+                var result = client.GetKlines(SelectedSymbol.Symbol, KlineInterval.OneHour, start);
+                //SelectedSymbol.AddKline(KlineInterval.OneHour,);
+                SelectedSymbol.AddKlines(KlineInterval.OneHour, result.Data);
+            }
+        }
+
         private void Get24HourStats()
         {
             using (var client = new BinanceClient())
@@ -248,7 +293,7 @@ namespace Binance.Net.ClientWPF
 
         private void SubscribeUserStream()
         {
-            if (ApiKey == null || ApiSecret == null)
+            if (string.IsNullOrWhiteSpace(ApiKey) || string.IsNullOrWhiteSpace(ApiSecret))
                 return;
 
             Task.Run(() =>
@@ -256,7 +301,7 @@ namespace Binance.Net.ClientWPF
                 using (var client = new BinanceClient())
                 {
                     var startOkay = client.StartUserStream();
-                    if(!startOkay.Success)
+                    if (!startOkay.Success)
                         messageBoxService.ShowMessage($"Error requesting data: {startOkay.Error.Message}", "error", MessageBoxButton.OK, MessageBoxImage.Error);
 
                     socketClient.SubscribeToAccountUpdateStream(startOkay.Data.ListenKey, OnAccountUpdate);
@@ -281,6 +326,7 @@ namespace Binance.Net.ClientWPF
                 {
                     GetOrders();
                     Get24HourStats();
+                    GetHistory();
                 });
             }
 
