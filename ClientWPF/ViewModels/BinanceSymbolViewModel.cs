@@ -67,8 +67,8 @@ namespace Binance.Net.ClientWPF.ViewModels
             }
         }
 
-        private double price;
-        public double Price
+        private decimal price;
+        public decimal Price
         {
             get { return price; }
             set
@@ -78,8 +78,8 @@ namespace Binance.Net.ClientWPF.ViewModels
             }
         }
 
-        private double priceChangePercent;
-        public double PriceChangePercent
+        private decimal priceChangePercent;
+        public decimal PriceChangePercent
         {
             get { return priceChangePercent; }
             set
@@ -89,8 +89,8 @@ namespace Binance.Net.ClientWPF.ViewModels
             }
         }
 
-        private double highPrice;
-        public double HighPrice
+        private decimal highPrice;
+        public decimal HighPrice
         {
             get { return highPrice; }
             set
@@ -100,8 +100,8 @@ namespace Binance.Net.ClientWPF.ViewModels
             }
         }
 
-        private double lowPrice;
-        public double LowPrice
+        private decimal lowPrice;
+        public decimal LowPrice
         {
             get { return lowPrice; }
             set
@@ -111,8 +111,8 @@ namespace Binance.Net.ClientWPF.ViewModels
             }
         }
 
-        private double volume;
-        public double Volume
+        private decimal volume;
+        public decimal Volume
         {
             get { return volume; }
             set
@@ -122,8 +122,8 @@ namespace Binance.Net.ClientWPF.ViewModels
             }
         }
 
-        private double tradeAmount;
-        public double TradeAmount
+        private decimal tradeAmount;
+        public decimal TradeAmount
         {
             get { return tradeAmount; }
             set
@@ -133,8 +133,8 @@ namespace Binance.Net.ClientWPF.ViewModels
             }
         }
 
-        private double tradePrice;
-        public double TradePrice
+        private decimal tradePrice;
+        public decimal TradePrice
         {
             get { return tradePrice; }
             set
@@ -202,7 +202,7 @@ namespace Binance.Net.ClientWPF.ViewModels
         }
 
 
-        public BinanceSymbolViewModel(string symbol, double price)
+        public BinanceSymbolViewModel(string symbol, decimal price)
         {
             this.symbol = symbol;
             this.price = price;
