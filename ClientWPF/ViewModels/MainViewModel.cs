@@ -110,9 +110,13 @@ namespace Binance.Net.ClientWPF
 
 
         Dictionary<string, string> mainConfig;
+        Storage storage;
 
         public MainViewModel()
         {
+            // DB
+            storage = new Storage();
+
             // Load key and secret
             string configLocation = "config.ini";
             if (File.Exists(configLocation))
