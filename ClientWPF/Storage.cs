@@ -13,14 +13,12 @@ namespace Binance.Net.ClientWPF
     public class Storage
     {
         string binanceLocation = "BinanceHistory.sqlite";
-        SQLiteConnection _dbConnection;
+        public SQLiteConnection DBConnection { get; protected set; }
 
-        Dictionary<Type, Dictionary<string, Type>> tableMap = new Dictionary<Type, Dictionary<string, Type>>()
-        {
-            { typeof(BinanceKline), null },
-        };
 
-        private string GetSQLiteType(Type type)
+        Dictionary<Type, Dictionary<string, Type>> tableMap = new Dictionary<Type, Dictionary<string, Type>>();
+
+        public static string GetSQLiteType(Type type)
         {
             var @switch = new Dictionary<Type, Func<string>>
             {
@@ -35,37 +33,43 @@ namespace Binance.Net.ClientWPF
 
         public Storage()
         {
+            List<string> rebuildTables = new List<string>();
+            foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
+            {
+                var dbTables = assembly.GetTypesWithAttribute(typeof(DBTable));
+                foreach (var table in dbTables)
+                {
+                    if (!tableMap.ContainsKey(table))
+                        tableMap.Add(table, null);
+                }
+            }
+
             foreach (var key in tableMap.Keys.ToList())
             {
                 tableMap[key] = key.GetProperties().ToDictionary(pi => pi.Name, pi => pi.PropertyType);
+                //Recreate Tables
+                string props = string.Join(",", tableMap[key].Select(kvp => $"{kvp.Key} {GetSQLiteType(kvp.Value)}"));
+                string sql = $"create table if not exists {key.Name} ({props})";
+                //File.AppendAllText("sql.txt", sql + "\n");
+                rebuildTables.Add(sql);
             }
 
-            List<string> rebuildTables = new List<string>();
             // Make sure DB exists
             if (!File.Exists(binanceLocation))
             {
                 SQLiteConnection.CreateFile(binanceLocation);
-
-                foreach (var key in tableMap.Keys)
-                {
-                    //Recreate Tables
-                    string props = string.Join(",", tableMap[key].Select(kvp => $"{kvp.Key} {GetSQLiteType(kvp.Value)}"));
-                    string sql = $"create table {key.Name} ({props})";
-                    //File.AppendAllText("sql.txt", sql + "\n");
-                    rebuildTables.Add(sql);
-                }
             }
 
-            _dbConnection = new SQLiteConnection($"Data Source={binanceLocation};Version=3;");
-            _dbConnection.Open();
+            DBConnection = new SQLiteConnection($"Data Source={binanceLocation};Version=3;");
+            DBConnection.Open();
 
-            foreach(var sql in rebuildTables)
+            foreach (var sql in rebuildTables)
             {
-                SQLiteCommand command = new SQLiteCommand(sql, _dbConnection);
+                SQLiteCommand command = new SQLiteCommand(sql, DBConnection);
                 command.ExecuteNonQueryAsync();
             }
 
-            _dbConnection.Close();
+            DBConnection.Close();
         }
     }
 }
