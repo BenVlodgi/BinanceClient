@@ -1,4 +1,6 @@
 ﻿using System;
+using Binance.Net.Objects;
+using LiveCharts.Defaults;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -25,6 +27,11 @@ namespace Binance.Net.ClientWPF
                     yield return type;
                 }
             }
+        }
+
+        public static OhlcPoint ToOhlcPoint(this BinanceKline kline)
+        {
+            return new OhlcPoint((double)kline.Open, (double)kline.High, (double)kline.Low, (double)kline.Close);
         }
     }
 }
