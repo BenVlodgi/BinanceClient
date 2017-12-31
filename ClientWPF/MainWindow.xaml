@@ -5,9 +5,10 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Binance.Net.ClientWPF"
         xmlns:controls="clr-namespace:Binance.Net.ClientWPF.UserControls"
+        xmlns:lvc="clr-namespace:LiveCharts.Wpf;assembly=LiveCharts.Wpf"
         mc:Ignorable="d"
         Name="Main"
-        Title="Binance.Net WPF Example" Height="600" Width="1400">
+        Title="Binance" Height="600" Width="1400">
     <Window.DataContext>
         <local:MainViewModel/>
     </Window.DataContext>
@@ -15,13 +16,14 @@
         <ResourceDictionary>
             <BitmapImage x:Key="Settings" UriSource="Resources/settings.png"/>
             <BooleanToVisibilityConverter x:Key="BoolToVis" />
+            <local:NullVisibilityConverter x:Key="NullToVisibilityConverter"/>
         </ResourceDictionary>
     </Window.Resources>
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="270"></ColumnDefinition>
-            <ColumnDefinition></ColumnDefinition>
-            <ColumnDefinition Width="Auto"></ColumnDefinition>
+            <ColumnDefinition ></ColumnDefinition>
+            <ColumnDefinition Width="500"></ColumnDefinition>
         </Grid.ColumnDefinitions>
 
         <Grid.RowDefinitions>
@@ -53,17 +55,17 @@
         </ListView>
 
         <controls:SymbolUserControl Grid.Column="1" Grid.Row="1" Visibility="{Binding SymbolIsSelected, Converter={StaticResource BoolToVis}}"></controls:SymbolUserControl>
-        
-        <ListView Grid.Column="2"  Grid.Row="0" Grid.RowSpan="2" Margin="5" ItemsSource="{Binding SelectedSymbol.Klines}">
-            <ListView.View>
-                <GridView>
-                    <GridView.Columns>
-                        <GridViewColumn Width="80" Header="OpenTime" DisplayMemberBinding="{Binding OpenTime}"/>
-                        <GridViewColumn Width="100" Header="Open" DisplayMemberBinding="{Binding Open}"/>
-                        <GridViewColumn Width="100" Header="Close" DisplayMemberBinding="{Binding Close, StringFormat={}{0:#,#.00000000}}"/>
-                    </GridView.Columns>
-                </GridView>
-            </ListView.View>
-        </ListView>
+
+        <Grid Grid.Column="2"  Grid.Row="0" Grid.RowSpan="2"  Visibility="{Binding SelectedSymbol, Converter={StaticResource NullToVisibilityConverter}}">
+            <Grid.RowDefinitions>
+                <RowDefinition />
+            </Grid.RowDefinitions>
+
+            <lvc:CartesianChart Grid.Row="1" Series="{Binding SelectedSymbol.CandleSticks}" Visibility="{Binding SelectedSymbol.CandleSticks, Converter={StaticResource NullToVisibilityConverter}}" >
+                <lvc:CartesianChart.AxisX>
+                    <lvc:Axis Labels="{Binding SelectedSymbol.CandleStickLabels}"/>
+                </lvc:CartesianChart.AxisX>
+            </lvc:CartesianChart>
+        </Grid>
     </Grid>
 </Window>
