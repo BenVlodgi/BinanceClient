@@ -180,12 +180,24 @@ namespace Binance.Net.ClientWPF.ViewModels
                 RaisePropertyChangedEvent("Klines");
             }
         }
+
         public void AddKline(KlineInterval interval, BinanceKline klineValue)
         {
             klines[interval].Add(klineValue);
 
             if (interval == klineInterval)
                 RaisePropertyChangedEvent("Klines");
+        }
+
+        public void ClearKlines()
+        {
+            System.Windows.Application.Current.Dispatcher.Invoke(() =>
+            {
+                foreach(var klineTable in klines)
+                {
+                    klineTable.Value.Clear();
+                }
+            });
         }
 
         public void AddKlines(KlineInterval interval, IEnumerable<BinanceKline> klineValues)
