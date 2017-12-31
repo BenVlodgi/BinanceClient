@@ -5,6 +5,9 @@ using Binance.Net.Objects;
 using System.Collections.Generic;
 using System;
 using System.Windows.Threading;
+using LiveCharts;
+using LiveCharts.Wpf;
+using LiveCharts.Defaults;
 
 namespace Binance.Net.ClientWPF.ViewModels
 {
@@ -167,7 +170,7 @@ namespace Binance.Net.ClientWPF.ViewModels
             }
         }
 
-        private Dictionary<KlineInterval, ObservableCollection<BinanceKline>> klines = Enum.GetValues(typeof(KlineInterval)).Cast<KlineInterval>().ToDictionary(val => val, val=> new ObservableCollection<BinanceKline>());
+        private Dictionary<KlineInterval, ObservableCollection<BinanceKline>> klines = Enum.GetValues(typeof(KlineInterval)).Cast<KlineInterval>().ToDictionary(val => val, val => new ObservableCollection<BinanceKline>());
         public ObservableCollection<BinanceKline> Klines
         {
             get
@@ -193,7 +196,7 @@ namespace Binance.Net.ClientWPF.ViewModels
         {
             System.Windows.Application.Current.Dispatcher.Invoke(() =>
             {
-                foreach(var klineTable in klines)
+                foreach (var klineTable in klines)
                 {
                     klineTable.Value.Clear();
                 }
@@ -204,13 +207,40 @@ namespace Binance.Net.ClientWPF.ViewModels
         {
             System.Windows.Application.Current.Dispatcher.Invoke(() =>
             {
+                CandleSticks = new SeriesCollection { new CandleSeries { Values = new ChartValues<OhlcPoint>(klineValues.Select(kline => kline.ToOhlcPoint())) } };
+                CandleStickLabels = klineValues.Select(kline => kline.OpenTime.ToString("dd MMM")).Distinct().ToArray();
+                
                 foreach (var kline in klineValues)
-                    //if(!klines[interval].contains)
+                {
                     klines[interval].Add(kline);
 
-                if (interval == klineInterval)
-                    RaisePropertyChangedEvent("Klines");
+                    if (interval == klineInterval)
+                    {
+                        RaisePropertyChangedEvent("Klines");
+                    }
+                }
             });
+        }
+
+        private SeriesCollection candleSticks;
+        public SeriesCollection CandleSticks
+        {
+            get { return candleSticks; }
+            set
+            {
+                candleSticks = value;
+                RaisePropertyChangedEvent("CandleSticks");
+            }
+        }
+        private string[] candleStickLabels;
+        public string[] CandleStickLabels
+        {
+            get { return candleStickLabels; }
+            set
+            {
+                candleStickLabels = value;
+                RaisePropertyChangedEvent("CandleStickLabels");
+            }
         }
 
 
