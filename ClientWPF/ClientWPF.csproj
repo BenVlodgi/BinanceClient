@@ -154,6 +154,7 @@
     <Compile Include="Global.cs" />
     <Compile Include="MessageBox\IMessageBoxService.cs" />
     <Compile Include="MessageBox\MessageBoxService.cs" />
+    <Compile Include="NullVisibilityConverter.cs" />
     <Compile Include="Storage.cs" />
     <Compile Include="StorageAttributes.cs" />
     <Compile Include="StorageTableBase.cs" />
