@@ -234,7 +234,7 @@ namespace Binance.Net.ClientWPF
             }
             Task.WaitAll(tasks.ToArray());
         }
-
+        
         private void GetHistory()
         {
             if (SelectedSymbol == null)
@@ -246,9 +246,14 @@ namespace Binance.Net.ClientWPF
                 var start = now - new TimeSpan(24, 0, 0);
 
                 SelectedSymbol.KlineInterval = KlineInterval.OneHour;
+                var usedInterval = SelectedSymbol.KlineInterval;
+                var usedSymbol = SelectedSymbol.Symbol;
 
-                var result = client.GetKlines(SelectedSymbol.Symbol, KlineInterval.OneHour, start);
-                //SelectedSymbol.AddKline(KlineInterval.OneHour,);
+                var result = client.GetKlines(SelectedSymbol.Symbol, usedInterval, start);
+                foreach(var kline in result.Data)
+                {
+                    new Candle(kline, usedSymbol, usedInterval) { Connection = storage.DBConnection}.Save();
+                }
                 SelectedSymbol.AddKlines(KlineInterval.OneHour, result.Data);
             }
         }
