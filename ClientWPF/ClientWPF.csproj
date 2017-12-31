@@ -150,6 +150,7 @@
     <Compile Include="MessageBox\MessageBoxService.cs" />
     <Compile Include="Storage.cs" />
     <Compile Include="StorageAttributes.cs" />
+    <Compile Include="StorageTableBase.cs" />
     <Compile Include="UserControls\SettingsWindow.xaml.cs">
       <DependentUpon>SettingsWindow.xaml</DependentUpon>
     </Compile>
