@@ -31,7 +31,7 @@ namespace BinanceApi.TestConsole
                 var allOrders = client.GetAllOrders("BNBBTC");
                 var testOrderResult = client.PlaceTestOrder("BNBBTC", OrderSide.Buy, OrderType.Limit, TimeInForce.GoodTillCancel, 1, 1);
                 var queryOrder = client.QueryOrder("BNBBTC", allOrders.Data[0].OrderId);
-                var orderResult = client.PlaceOrder("BNBBTC", OrderSide.Sell, OrderType.Limit, TimeInForce.GoodTillCancel, 10, 0.0002);
+                var orderResult = client.PlaceOrder("BNBBTC", OrderSide.Sell, OrderType.Limit, TimeInForce.GoodTillCancel, 10, 0.0002M);
                 var cancelResult = client.CancelOrder("BNBBTC", orderResult.Data.OrderId);
                 var accountInfo = client.GetAccountInfo();
                 var myTrades = client.GetMyTrades("BNBBTC");
