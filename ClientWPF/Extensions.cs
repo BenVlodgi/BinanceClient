@@ -6,12 +6,13 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
+using NoobsMuc.Coinmarketcap.Client;
 
 namespace Binance.Net.ClientWPF
 {
     public static class Extensions
     {
-        public static TV GetValue<TK,TV>(this Dictionary<TK,TV> dictionary, TK key)
+        public static TV GetValue<TK, TV>(this Dictionary<TK, TV> dictionary, TK key)
         {
             if (dictionary.ContainsKey(key))
                 return dictionary[key];
@@ -33,5 +34,11 @@ namespace Binance.Net.ClientWPF
         {
             return new OhlcPoint((double)kline.Open, (double)kline.High, (double)kline.Low, (double)kline.Close);
         }
+
+        public static decimal? ParseToNullableDecimal(this string value)
+        {
+            return decimal.TryParse(value, out decimal parsed) ? (decimal?)parsed : null;
+        }
+
     }
 }
