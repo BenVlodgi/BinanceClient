@@ -41,10 +41,29 @@ namespace Binance.Net.ClientWPF
                 ChangeSymbol();
             }
         }
+
         public bool SymbolIsSelected
         {
             get { return SelectedSymbol != null; }
         }
+
+        #region SelectedLedgerAsset
+        protected LedgerAssetViewModel _selectedLedgerAsset;
+        public LedgerAssetViewModel SelectedLedgerAsset
+        {
+            get { return _selectedLedgerAsset; }
+            set
+            {
+                _selectedLedgerAsset = value;
+                RaisePropertyChangedEvent("SelectedLedgerAsset");
+
+                if (value != null)
+                {
+                    SelectedSymbol = AllPrices?.Where(symbol => symbol.Symbol == $"{value.Asset}BTC").FirstOrDefault();
+                }
+            }
+        }
+        #endregion
 
         private ObservableCollection<AssetViewModel> assets;
         public ObservableCollection<AssetViewModel> Assets
@@ -56,6 +75,20 @@ namespace Binance.Net.ClientWPF
                 RaisePropertyChangedEvent("Assets");
             }
         }
+
+        #region Ledger
+        protected ObservableCollection<LedgerAssetViewModel> _ledger;
+        public ObservableCollection<LedgerAssetViewModel> Ledger
+        {
+            get { return _ledger; }
+            set
+            {
+                if (_ledger == value) return;
+                _ledger = value;
+                RaisePropertyChangedEvent("Ledger");
+            }
+        }
+        #endregion
 
         private bool settingsOpen = true;
         public bool SettingsOpen
@@ -106,6 +139,7 @@ namespace Binance.Net.ClientWPF
         private IMessageBoxService messageBoxService;
         private SettingsWindow settings;
         private object orderLock;
+        private object tradeLock;
         private BinanceSocketClient socketClient;
 
 
@@ -147,7 +181,12 @@ namespace Binance.Net.ClientWPF
             SettingsCommand = new DelegateCommand(Settings);
             CloseSettingsCommand = new DelegateCommand(CloseSettings);
 
+
+            socketClient = new BinanceSocketClient();
+
             Task.Run(() => GetAllSymbols());
+
+            SubscribeUserStream();
         }
 
         public void Cancel(object o)
@@ -221,7 +260,6 @@ namespace Binance.Net.ClientWPF
                     messageBoxService.ShowMessage($"Error requesting data: {result.Error.Message}", "error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
 
-            socketClient = new BinanceSocketClient();
             List<Task> tasks = new List<Task>();
             foreach (var symbol in AllPrices)
             {
@@ -234,7 +272,7 @@ namespace Binance.Net.ClientWPF
             }
             Task.WaitAll(tasks.ToArray());
         }
-        
+
         private void GetHistory()
         {
             if (SelectedSymbol == null)
@@ -250,9 +288,9 @@ namespace Binance.Net.ClientWPF
                 var usedSymbol = SelectedSymbol.Symbol;
 
                 var result = client.GetKlines(SelectedSymbol.Symbol, usedInterval, start);
-                foreach(var kline in result.Data)
+                foreach (var kline in result.Data)
                 {
-                    new Candle(kline, usedSymbol, usedInterval) { Connection = storage.DBConnection}.Save();
+                    new Candle(kline, usedSymbol, usedInterval) { Connection = storage.DBConnection }.Save();
                 }
                 SelectedSymbol.AddKlines(KlineInterval.OneHour, result.Data);
             }
@@ -315,12 +353,18 @@ namespace Binance.Net.ClientWPF
 
                     socketClient.SubscribeToAccountUpdateStream(startOkay.Data.ListenKey, OnAccountUpdate);
                     socketClient.SubscribeToOrderUpdateStream(startOkay.Data.ListenKey, OnOrderUpdate);
+                    socketClient.SubscribeToTradesStream(startOkay.Data.ListenKey, OnTradesUpdate);
 
                     var accountResult = client.GetAccountInfo();
                     if (accountResult.Success)
+                    {
                         Assets = new ObservableCollection<AssetViewModel>(accountResult.Data.Balances.Where(b => b.Free != 0 || b.Locked != 0).Select(b => new AssetViewModel() { Asset = b.Asset, Free = b.Free, Locked = b.Locked }).ToList());
+                        Ledger = new ObservableCollection<LedgerAssetViewModel>(accountResult.Data.Balances.Where(b => b.Free != 0 || b.Locked != 0).Select(b => new LedgerAssetViewModel() { Asset = b.Asset, Amount = b.Total }).OrderByDescending(ledge=>ledge.ValueUSD).ToList());
+                    }
                     else
+                    {
                         messageBoxService.ShowMessage($"Error requesting data: {accountResult.Error.Message}", "error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    }
                 }
             });
         }
@@ -344,7 +388,23 @@ namespace Binance.Net.ClientWPF
         private void OnAccountUpdate(BinanceStreamAccountInfo data)
         {
             Assets = new ObservableCollection<AssetViewModel>(data.Balances.Where(b => b.Free != 0 || b.Locked != 0).Select(b => new AssetViewModel() { Asset = b.Asset, Free = b.Free, Locked = b.Locked }).ToList());
+
+            // Update Ledger
+            foreach (var balance in data.Balances)
+            {
+                var ledge = Ledger.Where(l => balance.Asset == l.Asset).FirstOrDefault();
+
+                // Only worth tracking if we have a balance to monitor
+                if (balance.Free != 0 || balance.Locked != 0)
+                {
+                    if (ledge == null) Ledger.Add(new LedgerAssetViewModel() { Asset = balance.Asset, Amount = balance.Total });
+                    else ledge.Amount = balance.Total;
+                }
+                else if (ledge != null)
+                    Ledger.Remove(ledge);
+            }
         }
+
 
         private void OnOrderUpdate(BinanceStreamOrderUpdate data)
         {
@@ -354,8 +414,8 @@ namespace Binance.Net.ClientWPF
 
             lock (orderLock)
             {
-                var order = symbol.Orders.SingleOrDefault(o => o.Id == data.OrderId);
-                if (order == null)
+                var trade = symbol?.Orders?.SingleOrDefault(o => o.Id == data.OrderId);
+                if (trade == null)
                 {
                     if (data.RejectReason != OrderRejectReason.None || data.ExecutionType != ExecutionType.New)
                         // Order got rejected, no need to show
@@ -379,10 +439,44 @@ namespace Binance.Net.ClientWPF
                 }
                 else
                 {
-                    order.ExecutedQuantity = data.AccumulatedQuantityOfFilledTrades;
-                    order.Status = data.Status;
+                    trade.ExecutedQuantity = data.AccumulatedQuantityOfFilledTrades;
+                    trade.Status = data.Status;
                 }
             }
+        }
+
+        private void OnTradesUpdate(BinanceStreamTrade data)
+        {
+            var symbol = AllPrices.SingleOrDefault(a => a.Symbol == data.Symbol);
+            if (symbol == null) return;
+
+            //lock (tradeLock)
+            //{
+            //    var trade = symbol?.AggregateTrades?.SingleOrDefault(t => t.AggregateTradeID == data.AggregatedTradeId);
+            //    if (trade == null)
+            //    {
+            //        Application.Current.Dispatcher.Invoke(() =>
+            //        {
+            //            symbol.AddOrder(new AggregateTradeViewModel()
+            //            {
+            //                Symbol = data.Symbol,
+            //                AggregateTradeID = data.AggregatedTradeId,
+            //                OriginalQuantity = data.Quantity,
+            //                Price = data.Price == 0 ? "market" : data.Price.ToString("0.##########"),
+            //                Side = data.Side,
+            //                Status = data.Status,
+            //                Symbol = data.Symbol,
+            //                Time = data.Time,
+            //                Type = data.Type
+            //            });
+            //        });
+            //    }
+            //    else
+            //    {
+            //        order.ExecutedQuantity = data.AccumulatedQuantityOfFilledTrades;
+            //        order.Status = data.Status;
+            //    }
+            //}
         }
     }
 }
