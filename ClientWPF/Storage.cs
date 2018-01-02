@@ -71,5 +71,21 @@ namespace Binance.Net.ClientWPF
 
             DBConnection.Close();
         }
+
+        //List<string> sqlQueue = new List<string>();
+        //bool executingSQL = false;
+        //public void AddSQLToQueue(string sql)
+        //{
+        //    if(executingSQL)
+        //    {
+        //        sqlQueue.Add(sql);
+        //    }
+        //    else
+        //    {
+        //        DBConnection.Open();
+        //        DBConnection
+        //    }
+        //
+        //}
     }
 }
