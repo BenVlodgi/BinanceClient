@@ -158,6 +158,17 @@ namespace Binance.Net.ClientWPF.ViewModels
             }
         }
 
+        private ObservableCollection<AggregateTradeViewModel> aggregateTrades;
+        public ObservableCollection<AggregateTradeViewModel> AggregateTrades
+        {
+            get { return aggregateTrades; }
+            set
+            {
+                aggregateTrades = value;
+                RaisePropertyChangedEvent("AggregateTrades");
+            }
+        }
+
         private KlineInterval klineInterval = KlineInterval.OneHour;
         public KlineInterval KlineInterval
         {
@@ -255,6 +266,13 @@ namespace Binance.Net.ClientWPF.ViewModels
             Orders.Add(order);
             Orders.OrderByDescending(o => o.Time);
             RaisePropertyChangedEvent("Orders");
+        }
+
+        public void AddAggregateTrades(AggregateTradeViewModel aggregateTrade)
+        {
+            AggregateTrades.Add(aggregateTrade);
+            AggregateTrades.OrderByDescending(t => t.Time);
+            RaisePropertyChangedEvent("AggregateTrades");
         }
     }
 }
