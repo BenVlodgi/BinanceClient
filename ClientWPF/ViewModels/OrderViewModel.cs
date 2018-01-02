@@ -4,7 +4,7 @@ using Binance.Net.Objects;
 
 namespace Binance.Net.ClientWPF.ViewModels
 {
-    public class OrderViewModel: ObservableObject
+    public class OrderViewModel : ObservableObject
     {
         private long id;
         public long Id
@@ -36,8 +36,10 @@ namespace Binance.Net.ClientWPF.ViewModels
             {
                 price = value;
                 RaisePropertyChangedEvent("Price");
+                RaisePropertyChangedEvent("PriceDisplay");
             }
         }
+        public string PriceDisplay { get { return price == 0 ? "market" : price.ToString("0.##########"); } }
 
         private decimal originalQuantity;
         public decimal OriginalQuantity
@@ -64,7 +66,7 @@ namespace Binance.Net.ClientWPF.ViewModels
 
         public string FullFilled
         {
-            get { return ExecutedQuantity + "/" + OriginalQuantity; }
+            get { return ExecutedQuantity.ToString("0.##########") + "/" + OriginalQuantity.ToString("0.##########"); }
         }
 
         private OrderStatus status;
