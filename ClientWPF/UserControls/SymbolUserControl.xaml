@@ -8,7 +8,7 @@
              xmlns:enums="clr-namespace:Binance.Net.Objects;assembly=Binance.Net"
              mc:Ignorable="d" 
              Name="SymbolControl"
-             d:DesignHeight="300" d:DesignWidth="300">
+             d:DesignHeight="600" d:DesignWidth="600">
     <UserControl.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVis" />
     </UserControl.Resources>
@@ -111,16 +111,11 @@
                       CanUserReorderColumns="False"
                       CanUserResizeColumns="False">
                 <DataGrid.Columns>
-                    <DataGridTextColumn Width="50" Header="Buy/Sell" IsReadOnly="True"
-                        Binding="{Binding Side}"/>
-                    <DataGridTextColumn Width="90" Header="Rate" IsReadOnly="True"
-                        Binding="{Binding Price}"/>
-                    <DataGridTextColumn Width="120" Header="Amount fullfilled" IsReadOnly="True"
-                        Binding="{Binding FullFilled}"/>
-                    <DataGridTextColumn Width="120" Header="Status" IsReadOnly="True"
-                        Binding="{Binding Status}"/>
-                    <DataGridTextColumn Width="130" Header="Date" IsReadOnly="True"
-                        Binding="{Binding Time}"/>
+                    <DataGridTextColumn Width="50" Header="Buy/Sell" IsReadOnly="True" Binding="{Binding Side}"/>
+                    <DataGridTextColumn Width="130" Header="Date" IsReadOnly="True" Binding="{Binding Time}"/>
+                    <DataGridTextColumn Width="90" Header="Rate" IsReadOnly="True" Binding="{Binding PriceDisplay}"/>
+                    <DataGridTextColumn Width="120" Header="Amount fullfilled" IsReadOnly="True" Binding="{Binding FullFilled}"/>
+                    <DataGridTextColumn Width="120" Header="Status" IsReadOnly="True" Binding="{Binding Status}"/>
                     <DataGridTemplateColumn>
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
