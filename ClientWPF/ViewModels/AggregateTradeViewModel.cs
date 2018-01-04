@@ -128,6 +128,8 @@ namespace Binance.Net.ClientWPF.ViewModels
         }
         #endregion
 
+        public AggregateTradeViewModel() { }
+
         public AggregateTradeViewModel(BinanceStreamTrade data)
         {
             Symbol = data.Symbol;
@@ -138,6 +140,17 @@ namespace Binance.Net.ClientWPF.ViewModels
             Time = data.TradeTime;
             BuyerIsMaker = data.BuyerIsMaker;
             //IsBestMatch = data.
+        }
+        public AggregateTradeViewModel(string symbol, BinanceAggregatedTrades data)
+        {
+            Symbol = symbol;
+            Price = data.Price;
+            Quantity = data.Quantity;
+            FirstTradeID = data.FirstTradeId;
+            LastTradeID = data.LastTradeId;
+            Time = data.Timestamp;
+            BuyerIsMaker = data.BuyerWasMaker;
+            IsBestMatch = data.WasBestPriceMatch;
         }
     }
 }
