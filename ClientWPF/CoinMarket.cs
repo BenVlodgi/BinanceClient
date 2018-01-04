@@ -12,21 +12,17 @@ namespace Binance.Net.ClientWPF
         static ICoinmarketcapClient cmcc;
         static public IEnumerable<Currency> Currencies { get; private set; }
 
-        static Dictionary<string, string> symbolReplacements = new Dictionary<string, string>()
-        {
-            { "IOTA", "MIOTA" }
-        };
 
         static CoinMarket()
         {
             cmcc = new CoinmarketcapClient();
             Currencies = cmcc.GetCurrencies(100000);
+            //TODO: This hangs on occasion
         }
 
         static public Currency GetCurrency(string symbol)
         {
-            if (symbolReplacements.ContainsKey(symbol))
-                symbol = symbolReplacements[symbol];
+            symbol = Global.GetBinanceSymbolName(symbol);
 
             return Currencies.Where(currency => currency.Symbol == symbol).FirstOrDefault();
         }
