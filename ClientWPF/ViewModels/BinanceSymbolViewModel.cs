@@ -8,15 +8,16 @@ using System.Windows.Threading;
 using LiveCharts;
 using LiveCharts.Wpf;
 using LiveCharts.Defaults;
+using System.Windows;
 
 namespace Binance.Net.ClientWPF.ViewModels
 {
     public class BinanceSymbolViewModel : ObservableObject
     {
 
-        private void EnsureSymbolPairs()
+        private void EnsureSymbolPairs(bool force = false)
         {
-            if (symbolPair.Length == 0)
+            if (symbolPair.Length == 0 || force)
             {
                 symbolPair = Global.SplitTradeSymbols(Symbol);
                 if (symbolPair.Length == 0)
@@ -63,7 +64,7 @@ namespace Binance.Net.ClientWPF.ViewModels
                 symbol = value;
                 RaisePropertyChangedEvent("Symbol");
 
-                symbolPair = new string[0];
+                EnsureSymbolPairs(true);
                 RaisePropertyChangedEvent("SymbolText");
                 RaisePropertyChangedEvent("SymbolAsset");
                 RaisePropertyChangedEvent("SymbolCurrency");
@@ -151,10 +152,21 @@ namespace Binance.Net.ClientWPF.ViewModels
         public ObservableCollection<OrderViewModel> Orders
         {
             get { return orders; }
-            set
+            private set
             {
                 orders = value;
                 RaisePropertyChangedEvent("Orders");
+            }
+        }
+
+        private ObservableCollection<TradeViewModel> trades;
+        public ObservableCollection<TradeViewModel> Trades
+        {
+            get { return trades; }
+            set
+            {
+                trades = value;
+                RaisePropertyChangedEvent("Trades");
             }
         }
 
@@ -220,7 +232,7 @@ namespace Binance.Net.ClientWPF.ViewModels
             {
                 CandleSticks = new SeriesCollection { new CandleSeries { Values = new ChartValues<OhlcPoint>(klineValues.Select(kline => kline.ToOhlcPoint())) } };
                 CandleStickLabels = klineValues.Select(kline => kline.OpenTime.ToString("dd MMM")).Distinct().ToArray();
-                
+
                 foreach (var kline in klineValues)
                 {
                     klines[interval].Add(kline);
@@ -259,6 +271,10 @@ namespace Binance.Net.ClientWPF.ViewModels
         {
             this.symbol = symbol;
             this.price = price;
+
+            orders = new ObservableCollection<OrderViewModel>();
+            trades = new ObservableCollection<TradeViewModel>();
+            aggregateTrades = new ObservableCollection<AggregateTradeViewModel>();
         }
 
         public void AddOrder(OrderViewModel order)
@@ -268,7 +284,34 @@ namespace Binance.Net.ClientWPF.ViewModels
             RaisePropertyChangedEvent("Orders");
         }
 
-        public void AddAggregateTrades(AggregateTradeViewModel aggregateTrade)
+        public void AddOrders(IEnumerable<OrderViewModel> value)
+        {
+            Application.Current.Dispatcher.Invoke(() =>
+            {
+                foreach (var order in value)
+                {
+                    var containedOrder = Orders.Where(o => o.Id == order.Id).FirstOrDefault();
+                    if (containedOrder is null)
+                    {
+                        Orders.Add(order);
+                    }
+                    else
+                    {
+                        Orders[orders.IndexOf(containedOrder)] = order;
+                    }
+                }
+                Orders = new ObservableCollection<OrderViewModel>(Orders.OrderByDescending(order => order.Time));
+            });
+        }
+
+        public void AddTrade(TradeViewModel trade)
+        {
+            Trades.Add(trade);
+            Trades.OrderByDescending(t => t.Time);
+            RaisePropertyChangedEvent("Trades");
+        }
+
+        public void AddAggregateTrade(AggregateTradeViewModel aggregateTrade)
         {
             AggregateTrades.Add(aggregateTrade);
             AggregateTrades.OrderByDescending(t => t.Time);
