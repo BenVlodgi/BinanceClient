@@ -10,6 +10,26 @@ namespace Binance.Net.ClientWPF.ViewModels
 {
     public class LedgerAssetViewModel : ObservableObject
     {
+        #region Constructors
+        public LedgerAssetViewModel()
+        {
+            trades = new ObservableCollection<TradeViewModel>();
+        }
+        #endregion
+
+        #region Trades
+        private ObservableCollection<TradeViewModel> trades;
+        public ObservableCollection<TradeViewModel> Trades
+        {
+            get { return trades; }
+            protected set
+            {
+                trades = value;
+                RaisePropertyChangedEvent("Trades");
+            }
+        }
+        #endregion
+
         #region Asset
         protected string _asset;
         public string Asset
@@ -152,6 +172,22 @@ namespace Binance.Net.ClientWPF.ViewModels
         }
         #endregion
 
-
+        public void AddTrades(IEnumerable<TradeViewModel> trades)
+        {
+            var tempTrades = Trades.ToList();
+            foreach (var trade in trades)
+            {
+                var existingTrade = tempTrades.Where(t=> t.Symbol == trade.Symbol && t.Time == trade.Time).FirstOrDefault();
+                if (existingTrade == null)
+                {
+                    tempTrades.Add(trade);
+                }
+                else
+                {
+                    tempTrades.ReplaceInPlace(existingTrade, trade);
+                }
+            }
+            Trades = new ObservableCollection<TradeViewModel>(tempTrades.OrderByDescending(trade => trade.Time));
+        }
     }
 }
