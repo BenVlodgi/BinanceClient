@@ -18,7 +18,18 @@ namespace Binance.Net.ClientWPF
             ,"MANA","MCO","MDA","MOD","MTH","MTL","NEBL","NEO","NULS","OAX","OMG","OST","Pair","POE","POWR","PPT"
             ,"QSP","QTUM","RCN","RDN","REQ","SALT","SNGLS","SNM","SNT","STORJ","STRAT","SUB","TNB","TNT","TRX","USDT"
             ,"VEN","VIB","WABI","WAVES","WINGS","WTC","XLM","XMR","XRP","XVG","XZC","YOYO","ZEC","ZRX"
+            ,"TRIG","LUN","NAV"
         };
+
+        private static Dictionary<string, string> symbolReplacements = new Dictionary<string, string>()
+        {
+            { "IOTA", "MIOTA" }
+        };
+
+        public static string GetBinanceSymbolName(string symbol)
+        {
+            return symbolReplacements.ContainsKey(symbol) ? symbolReplacements[symbol] : symbol;
+        }
 
         public static string[] GetAllSymbols()
         {
