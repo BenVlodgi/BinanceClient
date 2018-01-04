@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Binance.Net.ClientWPF.MessageBox;
+using System;
 using System.Collections.Generic;
 using System.Data.SQLite;
 using System.Linq;
@@ -39,9 +40,10 @@ namespace Binance.Net.ClientWPF
                 var command = new SQLiteCommand(sql, Connection);
                 command.ExecuteNonQuery();
             }
-            catch
+            catch(Exception ex)
             {
-                throw;
+                var messageBoxService = new MessageBoxService();
+                messageBoxService.ShowMessage($"Saving SQLITE data failed", "SQLITE save fail", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
             }
             finally
             {
