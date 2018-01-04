@@ -1,5 +1,6 @@
 ﻿using Binance.Net.ClientWPF.MVVM;
 using Binance.Net.Objects;
+using NoobsMuc.Coinmarketcap.Client;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,7 +11,20 @@ namespace Binance.Net.ClientWPF.ViewModels
 {
     public class TradeViewModel : ObservableObject
     {
-        #region Symbol
+        #region Symbol SymbolAsset SymbolCurrency
+        private string[] symbolPair = new string[0];
+        protected void EnsureSymbolPairs(bool force = false)
+        {
+            if (symbolPair.Length == 0 || force)
+            {
+                symbolPair = Global.SplitTradeSymbols(Symbol);
+                if (symbolPair.Length == 0)
+                {
+                    symbolPair = new string[] { "***", "***" };
+                }
+            }
+        }
+
         private string symbol;
         public string Symbol
         {
@@ -20,9 +34,32 @@ namespace Binance.Net.ClientWPF.ViewModels
                 if (symbol == value) return;
                 symbol = value;
                 RaisePropertyChangedEvent("Symbol");
+
+                EnsureSymbolPairs(true);
+                RaisePropertyChangedEvent("SymbolAsset");
+                RaisePropertyChangedEvent("SymbolCurrency");
+            }
+        }
+
+        public string SymbolAsset
+        {
+            get
+            {
+                EnsureSymbolPairs();
+                return symbolPair?[0] ?? "";
+            }
+        }
+
+        public string SymbolCurrency
+        {
+            get
+            {
+                EnsureSymbolPairs();
+                return symbolPair?[1] ?? "";
             }
         }
         #endregion
+
         #region Id
         private long id;
         public long Id
@@ -101,7 +138,7 @@ namespace Binance.Net.ClientWPF.ViewModels
             }
         }
         #endregion
-        #region IsBuyer
+        #region IsBuyer BuyerSeller
         private bool _isBuyer;
         public bool IsBuyer
         {
@@ -111,8 +148,10 @@ namespace Binance.Net.ClientWPF.ViewModels
                 if (_isBuyer == value) return;
                 _isBuyer = value;
                 RaisePropertyChangedEvent("IsBuyer");
+                RaisePropertyChangedEvent("BuyerSeller");
             }
         }
+        public string BuySell { get { return IsBuyer ? "Buy" : "Sell"; } }
         #endregion
         #region IsMaker
         private bool _isMaker;
@@ -141,6 +180,42 @@ namespace Binance.Net.ClientWPF.ViewModels
         }
         #endregion
 
+        #region Currency
+        private BinanceSymbolViewModel _tradeSymbol;
+        public BinanceSymbolViewModel TradeSymbol
+        {
+            get { return _tradeSymbol; }
+            set
+            {
+                if (_tradeSymbol == value) return;
+                _tradeSymbol = value;
+                RaisePropertyChangedEvent("TradeSymbol");
+
+                CurrencyCurrentValue = _tradeSymbol.Price;
+            }
+        }
+        #endregion
+        #region CurrencyCurrentValue
+        private decimal _currencyCurrentValue;
+        public decimal CurrencyCurrentValue
+        {
+            get { return _currencyCurrentValue; }
+            set
+            {
+                if (_currencyCurrentValue == value) return;
+                _currencyCurrentValue = value;
+                RaisePropertyChangedEvent("CurrencyCurrentValue");
+                RaisePropertyChangedEvent("PercentChange");
+            }
+        }
+        #endregion
+        #region PercentChange
+        public string PercentChange
+        {
+            get { return CurrencyCurrentValue==0?"":$"{(((CurrencyCurrentValue/Price)-1)*100).ToString("#0.00")}%"; }
+        }
+        #endregion
+
         //public TradeViewModel(BinanceStreamTrade data)
         //{
         //    Symbol = data.Symbol;
@@ -152,5 +227,18 @@ namespace Binance.Net.ClientWPF.ViewModels
         //    BuyerIsMaker = data.BuyerIsMaker;
         //    //IsBestMatch = data.
         //}
+
+        public TradeViewModel(string symbol, BinanceTrade trade)
+        {
+            Symbol = symbol;
+            Price = trade.Price;
+            Quantity = trade.Quantity;
+            Commission = trade.Commission;
+            CommissionAsset = trade.CommissionAsset;
+            Time = trade.Time;
+            IsBuyer = trade.IsBuyer;
+            IsMaker = trade.IsMaker;
+            IsBestMatch = trade.IsBestMatch;
+        }
     }
 }
