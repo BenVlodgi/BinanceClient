@@ -18,7 +18,7 @@ namespace Binance.Net.ClientWPF
         }
 
 
-        private void Ledger_Updated(object sender, System.Windows.Data.DataTransferEventArgs e)
+        private void Grid_Updated(object sender, System.Windows.Data.DataTransferEventArgs e)
         {
             if ((sender as ListView)?.View is GridView gridview)
             {
