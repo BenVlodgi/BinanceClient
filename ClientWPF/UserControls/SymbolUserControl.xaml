@@ -8,7 +8,7 @@
              xmlns:enums="clr-namespace:Binance.Net.Objects;assembly=Binance.Net"
              mc:Ignorable="d" 
              Name="SymbolControl"
-             d:DesignHeight="600" d:DesignWidth="600">
+             d:DesignHeight="800" d:DesignWidth="600">
     <UserControl.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVis" />
     </UserControl.Resources>
@@ -21,7 +21,8 @@
             <RowDefinition Height="40"></RowDefinition>
             <RowDefinition Height="110"></RowDefinition>
             <RowDefinition Height="130"></RowDefinition>
-            <RowDefinition></RowDefinition>
+            <RowDefinition Height="*"></RowDefinition>
+            <RowDefinition Height="*"></RowDefinition>
         </Grid.RowDefinitions>
 
         <TextBlock Padding="10 10 10 0">
@@ -128,6 +129,27 @@
                             </DataTemplate>
                         </DataGridTemplateColumn.CellTemplate>
                     </DataGridTemplateColumn>
+                </DataGrid.Columns>
+            </DataGrid>
+        </GroupBox>
+        
+        <GroupBox Grid.Row="4" Grid.ColumnSpan="2">
+            <GroupBox.Header>
+                <TextBlock Text="Trade history" FontSize="20"></TextBlock>
+            </GroupBox.Header>
+            <DataGrid Margin="5" ItemsSource="{ Binding SelectedSymbol.Trades, UpdateSourceTrigger=PropertyChanged}" 
+                      AutoGenerateColumns="False" 
+                      CanUserAddRows="False" 
+                      CanUserDeleteRows="False"
+                      CanUserReorderColumns="False"
+                      CanUserResizeColumns="True">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Width="50" Header="Symbol" IsReadOnly="True" Binding="{Binding Symbol}"/>
+                    <DataGridTextColumn Width="50" Header="Buyer" IsReadOnly="True" Binding="{Binding IsBuyer}"/>
+                    <DataGridTextColumn Width="50" Header="Maker" IsReadOnly="True" Binding="{Binding IsMaker}"/>
+                    <DataGridTextColumn Width="130" Header="Date" IsReadOnly="True" Binding="{Binding Time}"/>
+                    <DataGridTextColumn Width="90" Header="Rate" IsReadOnly="True" Binding="{Binding Price}"/>
+                    <DataGridTextColumn Width="120" Header="Quantity" IsReadOnly="True" Binding="{Binding Quantity, StringFormat={}{0:#,#0.##########}}"/>
                 </DataGrid.Columns>
             </DataGrid>
         </GroupBox>
