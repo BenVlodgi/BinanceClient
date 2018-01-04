@@ -40,5 +40,14 @@ namespace Binance.Net.ClientWPF
             return decimal.TryParse(value, out decimal parsed) ? (decimal?)parsed : null;
         }
 
+        public static void ReplaceInPlace<T>(this List<T> list, T replaceMe, T with)
+        {
+            var replaceables = list.Where(element => element.Equals(replaceMe)).ToArray();
+            for(int i = 0; i<replaceables.Count(); i++)
+            {
+                list[list.IndexOf(replaceables[i])] = with;
+            }
+        }
+
     }
 }
