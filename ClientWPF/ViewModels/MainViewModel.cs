@@ -140,7 +140,7 @@ namespace Binance.Net.ClientWPF
         private SettingsWindow settings;
         private object orderLock;
         private object tradeLock;
-        private BinanceSocketClient socketClient;
+        private BinanceSocketClient binanceSocketClient;
 
 
         Dictionary<string, string> mainConfig;
@@ -182,7 +182,7 @@ namespace Binance.Net.ClientWPF
             CloseSettingsCommand = new DelegateCommand(CloseSettings);
 
 
-            socketClient = new BinanceSocketClient();
+            binanceSocketClient = new BinanceSocketClient();
 
             Task.Run(() => GetAllSymbols());
 
@@ -255,7 +255,7 @@ namespace Binance.Net.ClientWPF
             {
                 var result = await client.GetAllPricesAsync();
                 if (result.Success)
-                    AllPrices = new ObservableCollection<BinanceSymbolViewModel>(result.Data.Select(r => new BinanceSymbolViewModel(r.Symbol, r.Price)).ToList());
+                    AllPrices = new ObservableCollection<BinanceSymbolViewModel>(result.Data.Select(r => new BinanceSymbolViewModel(r.Symbol, r.Price)).OrderBy(s => s.SymbolCurrency).ThenBy(s => s.SymbolAsset).ToList());
                 else
                     messageBoxService.ShowMessage($"Error requesting data: {result.Error.Message}", "error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
@@ -263,7 +263,7 @@ namespace Binance.Net.ClientWPF
             List<Task> tasks = new List<Task>();
             foreach (var symbol in AllPrices)
             {
-                var task = new Task(() => socketClient.SubscribeToKlineStream(symbol.Symbol.ToLower(), KlineInterval.OneMinute, (data) =>
+                var task = new Task(() => binanceSocketClient.SubscribeToKlineStream(symbol.Symbol.ToLower(), KlineInterval.OneMinute, (data) =>
                 {
                     symbol.Price = data.Data.Close;
                 }));
@@ -298,6 +298,9 @@ namespace Binance.Net.ClientWPF
 
         private void Get24HourStats()
         {
+            if (SelectedSymbol is null)
+                return;
+
             using (var client = new BinanceClient())
             {
                 var result = client.Get24HPrices(SelectedSymbol.Symbol);
@@ -313,14 +316,17 @@ namespace Binance.Net.ClientWPF
             }
         }
 
-        private void GetOrders()
+        private void GetOrders(BinanceSymbolViewModel symbol = null)
         {
+            if (symbol == null)
+                symbol = SelectedSymbol;
+
             using (var client = new BinanceClient())
             {
-                var result = client.GetAllOrders(SelectedSymbol.Symbol);
+                var result = client.GetAllOrders(symbol.Symbol);
                 if (result.Success)
                 {
-                    SelectedSymbol.Orders = new ObservableCollection<OrderViewModel>(result.Data.OrderByDescending(d => d.Time).Select(o => new OrderViewModel()
+                    symbol.AddOrders(result.Data.OrderByDescending(d => d.Time).Select(o => new OrderViewModel()
                     {
                         Id = o.OrderId,
                         ExecutedQuantity = o.ExecutedQuantity,
@@ -338,6 +344,32 @@ namespace Binance.Net.ClientWPF
             }
         }
 
+        private void GetTrades(BinanceSymbolViewModel symbol = null)
+        {
+            if (symbol == null)
+                symbol = SelectedSymbol;
+
+            using (var client = new BinanceClient())
+            {
+                //var result = client.GetMyTrades(Global.GetBinanceSymbolName(symbol.Symbol)); // Not sure if this will fix IOTA or not
+                var result = client.GetMyTrades(symbol.Symbol);
+                if (result.Success)
+                {
+                    //SelectedSymbol.AggregateTrades = new ObservableCollection<AggregateTradeViewModel>(result.Data.OrderByDescending(d => d.Timestamp).Select(t => new AggregateTradeViewModel(symbol, t)));
+                    symbol.Trades = new ObservableCollection<TradeViewModel>(result.Data.OrderByDescending(d => d.Time).Select(t => new TradeViewModel(symbol.Symbol, t) { TradeSymbol = AllPrices.Where(price=> price.Symbol==symbol.Symbol).FirstOrDefault() }));
+
+                    var ledgerAsset = Ledger.Where(ledge => ledge.Asset == symbol.SymbolAsset).FirstOrDefault();
+                    if(ledgerAsset != null)
+                    {
+                        ledgerAsset.AddTrades(symbol.Trades);
+                    }
+                }
+                else
+                    messageBoxService.ShowMessage($"Error getting trade data for [{symbol.Symbol}]: {result.Error.Message}", "error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+
         private void SubscribeUserStream()
         {
             if (string.IsNullOrWhiteSpace(ApiKey) || string.IsNullOrWhiteSpace(ApiSecret))
@@ -351,15 +383,15 @@ namespace Binance.Net.ClientWPF
                     if (!startOkay.Success)
                         messageBoxService.ShowMessage($"Error requesting data: {startOkay.Error.Message}", "error", MessageBoxButton.OK, MessageBoxImage.Error);
 
-                    socketClient.SubscribeToAccountUpdateStream(startOkay.Data.ListenKey, OnAccountUpdate);
-                    socketClient.SubscribeToOrderUpdateStream(startOkay.Data.ListenKey, OnOrderUpdate);
-                    socketClient.SubscribeToTradesStream(startOkay.Data.ListenKey, OnTradesUpdate);
+                    binanceSocketClient.SubscribeToAccountUpdateStream(startOkay.Data.ListenKey, OnAccountUpdate);
+                    binanceSocketClient.SubscribeToOrderUpdateStream(startOkay.Data.ListenKey, OnOrderUpdate);
+                    binanceSocketClient.SubscribeToTradesStream(startOkay.Data.ListenKey, OnTradesUpdate);
 
                     var accountResult = client.GetAccountInfo();
                     if (accountResult.Success)
                     {
                         Assets = new ObservableCollection<AssetViewModel>(accountResult.Data.Balances.Where(b => b.Free != 0 || b.Locked != 0).Select(b => new AssetViewModel() { Asset = b.Asset, Free = b.Free, Locked = b.Locked }).ToList());
-                        Ledger = new ObservableCollection<LedgerAssetViewModel>(accountResult.Data.Balances.Where(b => b.Free != 0 || b.Locked != 0).Select(b => new LedgerAssetViewModel() { Asset = b.Asset, Amount = b.Total }).OrderByDescending(ledge=>ledge.ValueUSD).ToList());
+                        Ledger = new ObservableCollection<LedgerAssetViewModel>(accountResult.Data.Balances.Where(b => b.Free != 0 || b.Locked != 0).Select(b => new LedgerAssetViewModel() { Asset = b.Asset, Amount = b.Total }).OrderByDescending(ledge => ledge.ValueUSD).ToList());
                     }
                     else
                     {
@@ -378,6 +410,8 @@ namespace Binance.Net.ClientWPF
                 Task.Run(() =>
                 {
                     GetOrders();
+                    //GetTrades();
+                    GetLedgerTrades();
                     Get24HourStats();
                     GetHistory();
                 });
@@ -402,6 +436,27 @@ namespace Binance.Net.ClientWPF
                 }
                 else if (ledge != null)
                     Ledger.Remove(ledge);
+            }
+        }
+
+        private void GetLedgerTrades()
+        {
+            var tradingCurrencies = new string[] { "BTC", "ETH", "BNB", "USDT" };
+            foreach (var ledge in Ledger)
+            {
+                // Get trading pairs for this asset
+                foreach (var currency in tradingCurrencies)
+                {
+                    if (currency == ledge.Asset) continue;
+
+                    //Note this pair may not be valid, especially for BNB and USDT
+                    var tradePair = $"{ledge.Asset}{currency}";
+                    var bSymbol = AllPrices.Where(pair => pair.Symbol == tradePair).FirstOrDefault();
+
+                    if (bSymbol is null) continue;
+
+                    GetTrades(bSymbol);
+                }
             }
         }
 
@@ -447,9 +502,9 @@ namespace Binance.Net.ClientWPF
 
         private void OnTradesUpdate(BinanceStreamTrade data)
         {
-            var symbol = AllPrices.SingleOrDefault(a => a.Symbol == data.Symbol);
-            if (symbol == null) return;
-
+            //var symbol = AllPrices.SingleOrDefault(a => a.Symbol == data.Symbol);
+            //if (symbol == null) return;
+            //
             //lock (tradeLock)
             //{
             //    var trade = symbol?.AggregateTrades?.SingleOrDefault(t => t.AggregateTradeID == data.AggregatedTradeId);
@@ -457,24 +512,12 @@ namespace Binance.Net.ClientWPF
             //    {
             //        Application.Current.Dispatcher.Invoke(() =>
             //        {
-            //            symbol.AddOrder(new AggregateTradeViewModel()
-            //            {
-            //                Symbol = data.Symbol,
-            //                AggregateTradeID = data.AggregatedTradeId,
-            //                OriginalQuantity = data.Quantity,
-            //                Price = data.Price == 0 ? "market" : data.Price.ToString("0.##########"),
-            //                Side = data.Side,
-            //                Status = data.Status,
-            //                Symbol = data.Symbol,
-            //                Time = data.Time,
-            //                Type = data.Type
-            //            });
+            //            symbol.AddAggregateTrade(new AggregateTradeViewModel(data));
             //        });
             //    }
             //    else
             //    {
-            //        order.ExecutedQuantity = data.AccumulatedQuantityOfFilledTrades;
-            //        order.Status = data.Status;
+            //        // Possibly Update Trade if there is new info
             //    }
             //}
         }
