@@ -43,11 +43,35 @@ namespace Binance.Net.ClientWPF
         public static void ReplaceInPlace<T>(this List<T> list, T replaceMe, T with)
         {
             var replaceables = list.Where(element => element.Equals(replaceMe)).ToArray();
-            for(int i = 0; i<replaceables.Count(); i++)
+            for (int i = 0; i < replaceables.Count(); i++)
             {
                 list[list.IndexOf(replaceables[i])] = with;
             }
         }
 
+        private static TimeSpan UTCOffset = DateTime.Now - DateTime.UtcNow;
+        public static DateTime UTCToLocal(this DateTime dateTime)
+        {
+            return dateTime + UTCOffset;
+        }
+        public static DateTime UTCFromLocal(this DateTime dateTime)
+        {
+            return dateTime - UTCOffset;
+        }
+
+        public static double ReRange(this double value, double oldMin, double oldMax, double newMin, double newMax)
+        {
+            double oldRange;
+            return (oldRange = oldMax - oldMin) == 0
+                ? newMin
+                : (((value - oldMin) * (newMax - newMin)) / oldRange) + newMin;
+        }
+
+        public static double ReRangeKnownRange(this double value, double oldMin, double oldRange, double newMin, double newRange)
+        {
+            return oldRange == 0
+                ? newMin
+                : (((value - oldMin) * newRange) / oldRange) + newMin;
+        }
     }
 }
