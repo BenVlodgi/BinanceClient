@@ -73,5 +73,55 @@ namespace Binance.Net.ClientWPF
                 ? newMin
                 : (((value - oldMin) * newRange) / oldRange) + newMin;
         }
+
+        public static void SplitAndPad(this double[] value, double splitPoint, out double[] aboveAndEqual, out double[] below)
+        {
+            //aboveAndEqual = value.AsParallel().Select(d => d >= splitPoint ? d : double.NaN).ToArray();
+            //below = value.AsParallel().Select(d => d < splitPoint ? d : double.NaN).ToArray();
+
+            aboveAndEqual = Enumerable.Repeat(double.NaN, value.Length).ToArray();
+            below = Enumerable.Repeat(double.NaN, value.Length).ToArray();
+
+            if (value.Length == 0) return;
+            
+            bool previousWasAbove = value[0] >= splitPoint;
+            
+            for(int i = 1; i< value.Length; i++)
+            {
+                if(value[i] >= splitPoint)
+                {
+                    if (!previousWasAbove)
+                    {
+                        aboveAndEqual[i - 1] = value[i - 1];
+                        previousWasAbove = true;
+                    }
+                    aboveAndEqual[i] = value[i];
+                }
+                else
+                {
+                    if (previousWasAbove)
+                    {
+                        below[i - 1] = value[i - 1];
+                        previousWasAbove = false;
+                    }
+                    below[i] = value[i];
+                }
+            }
+        }
+
+        public static void UpdateValues(this OhlcPoint point, OhlcPoint newPoint)
+        {
+            point.Open = newPoint.Open;
+            point.High = newPoint.High;
+            point.Low = newPoint.Low;
+            point.Close = newPoint.Close;
+        }
+        public static void UpdateValues(this OhlcPoint point, BinanceKline newKline)
+        {
+            point.Open = (double)newKline.Open;
+            point.High = (double)newKline.High;
+            point.Low = (double)newKline.Low;
+            point.Close = (double)newKline.Close;
+        }
     }
 }
