@@ -272,7 +272,7 @@ namespace Binance.Net.ClientWPF
                 if (result.Success)
                     AllPrices = new ObservableCollection<BinanceSymbolViewModel>(result.Data.Select(r => new BinanceSymbolViewModel(r.Symbol, r.Price)).OrderBy(s => s.SymbolCurrency).ThenBy(s => s.SymbolAsset).ToList());
                 else
-                    messageBoxService.ShowMessage($"Error requesting data: {result.Error.Message}", "error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    messageBoxService.ShowMessage($"Error getting all symbols data.\n{result.Error.Message}", $"Error Code: {result.Error.Code}", MessageBoxButton.OK, MessageBoxImage.Error);
             }
 
             List<Task> tasks = new List<Task>();
@@ -306,7 +306,7 @@ namespace Binance.Net.ClientWPF
                     SelectedSymbol.PriceChangePercent = result.Data.PriceChangePercent;
                 }
                 else
-                    messageBoxService.ShowMessage($"Error requesting data: {result.Error.Message}", "error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    messageBoxService.ShowMessage($"Error getting 24 hour stats.\n{result.Error.Message}", $"Error Code: {result.Error.Code}", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -334,7 +334,7 @@ namespace Binance.Net.ClientWPF
                     }));
                 }
                 else
-                    messageBoxService.ShowMessage($"Error requesting data: {result.Error.Message}", "error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    messageBoxService.ShowMessage($"Error getting orders.\n{result.Error.Message}", $"Error Code: {result.Error.Code}", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -410,7 +410,9 @@ namespace Binance.Net.ClientWPF
                 {
                     var symbol = SelectedSymbol; // use this to check if we should cancel because the symbol has changed
 
-                    GetOrders();
+                    if (!String.IsNullOrEmpty(ApiKey) && !String.IsNullOrEmpty(ApiSecret))
+                        GetOrders();
+
                     if (symbol != SelectedSymbol) return;
                     //GetTrades();
                     if (symbol != SelectedSymbol) return;
@@ -471,7 +473,7 @@ namespace Binance.Net.ClientWPF
                 // Get BTC pair for this asset
 
                 if ("BTC" == ledge.Asset) continue;
-                
+
                 var tradePair = $"{ledge.Asset}BTC";
                 var bSymbol = AllPrices.Where(pair => pair.Symbol == tradePair).FirstOrDefault();
 
