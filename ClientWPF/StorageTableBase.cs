@@ -43,7 +43,7 @@ namespace Binance.Net.ClientWPF
             catch(Exception ex)
             {
                 var messageBoxService = new MessageBoxService();
-                messageBoxService.ShowMessage($"Saving SQLITE data failed", "SQLITE save fail", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                //messageBoxService.ShowMessage($"Saving SQLITE data failed", "SQLITE save fail", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
             }
             finally
             {
