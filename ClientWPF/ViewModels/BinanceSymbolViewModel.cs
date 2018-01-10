@@ -384,8 +384,17 @@ namespace Binance.Net.ClientWPF.ViewModels
             ChartVisibleSteps = 24;
         }
 
+        bool gettingHistory = false;
+        bool updateHistoryWhenFinished = false;
         public void GetHistory(Storage storageInstance)
         {
+            if(gettingHistory)
+            {
+                updateHistoryWhenFinished = true;
+                return;
+            }
+
+            gettingHistory = true;
             DateTime now = DateTime.UtcNow;
 
             string symbol = Symbol;
@@ -431,6 +440,15 @@ namespace Binance.Net.ClientWPF.ViewModels
                 }
 
                 AddKlines(KlineInterval.OneHour, result.Data.ToList());
+            }
+
+
+            gettingHistory = false;
+            if(updateHistoryWhenFinished)
+            {
+                updateHistoryWhenFinished = false;
+                GetHistory(storageInstance);
+                // Note: This will use the previous storageInstance, if the instance needs to ever be different, then we can save it later above
             }
         }
 
