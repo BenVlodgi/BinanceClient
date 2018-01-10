@@ -8,6 +8,12 @@ using System.Threading.Tasks;
 
 namespace Binance.Net.ClientWPF.ViewModels
 {
+    class LedgerTradeValues
+    {
+        public decimal HeldAmount { get; set; } = 0m;
+        public decimal CurrencyAmount { get; set; } = 0m;
+    }
+
     public class LedgerAssetViewModel : ObservableObject
     {
         #region Constructors
@@ -115,7 +121,22 @@ namespace Binance.Net.ClientWPF.ViewModels
             {
                 if (_gainsPercentage == value) return;
                 _gainsPercentage = value;
-                RaisePropertyChangedEvent("Gains");
+                RaisePropertyChangedEvent("GainsPercentage");
+                RaisePropertyChangedEvent("GainsPercentageText");
+            }
+        }
+        public string GainsPercentageText { get { return GainsPercentage.ToString("0.##") + "%"; } }
+        #endregion
+        #region GainsUSD
+        private decimal _gainsUSD;
+        public decimal GainsUSD
+        {
+            get { return _gainsUSD; }
+            set
+            {
+                if (_gainsUSD == value) return;
+                _gainsUSD = value;
+                RaisePropertyChangedEvent("GainsUSD");
             }
         }
         #endregion
@@ -177,7 +198,7 @@ namespace Binance.Net.ClientWPF.ViewModels
             var tempTrades = Trades.ToList();
             foreach (var trade in trades)
             {
-                var existingTrade = tempTrades.Where(t=> t.Symbol == trade.Symbol && t.Time == trade.Time).FirstOrDefault();
+                var existingTrade = tempTrades.Where(t => t.Symbol == trade.Symbol && t.Time == trade.Time).FirstOrDefault();
                 if (existingTrade == null)
                 {
                     tempTrades.Add(trade);
@@ -188,6 +209,113 @@ namespace Binance.Net.ClientWPF.ViewModels
                 }
             }
             Trades = new ObservableCollection<TradeViewModel>(tempTrades.OrderByDescending(trade => trade.Time));
+            CalculateGainsPercentage();
+        }
+
+        public void CalculateGainsPercentage()
+        {
+            if (Asset == "BTC") return;
+
+
+            
+            //// This need to be modified to get coinmarkets BTC or USD value at time, and convert everything into that value trade
+            // foreach trade, from first to last:
+
+            //var tradeValues = new Dictionary<string, LedgerTradeValues>();
+            //foreach (var trade in Trades.OrderByDescending(t => t.Time))
+            //{
+            //    if (!tradeValues.ContainsKey(trade.SymbolCurrency))
+            //        tradeValues.Add(trade.SymbolCurrency, new LedgerTradeValues());
+            //
+            //    var tradeValue = tradeValues[trade.SymbolCurrency];
+            //
+            //    if (trade.IsBuyer == false && tradeValue.HeldAmount == 0)
+            //        continue;
+            //
+            //    if(trade.IsBuyer)
+            //    {
+            //        tradeValue.HeldAmount += trade.Quantity;
+            //        tradeValue.CurrencyAmount -= trade.Price * trade.Quantity;
+            //    }
+            //    else
+            //    {
+            //        var maxAmount = tradeValue.HeldAmount - trade.Quantity < 0 ? tradeValue.HeldAmount : trade.Quantity;
+            //        tradeValue.HeldAmount -= maxAmount;
+            //        tradeValue.CurrencyAmount += trade.Price * maxAmount;
+            //    }
+            //}
+            //
+            //decimal USDGainedLost = 0;
+            //foreach (var tradeHistory in tradeValues)
+            //{
+            //    // tradeHistory.Value.HeldAmount = how much is currently invested
+            //    // tradeHistory.Value.CurrencyAmount = how much of this currency we gained/lost investing
+            //    // convert HeldAmount into current value and add to currency amount, this is how much we gained, convert to USD to see gains/losses
+            //
+            //    var price = MainViewModel.MainViewModels.FirstOrDefault()?.AllPrices?.Where(p => p.SymbolAsset == Asset && p.SymbolCurrency == tradeHistory.Key).FirstOrDefault();
+            //    if (price == null) return;
+            //    var coinmarketCurrencyPrice = CoinMarket.GetCurrency(tradeHistory.Key);
+            //    if (coinmarketCurrencyPrice == null) return;
+            //
+            //    decimal capital = 0;
+            //    capital += tradeHistory.Value.HeldAmount * price.Price;
+            //    capital += tradeHistory.Value.CurrencyAmount;
+            //
+            //    decimal capitalUSD = decimal.Parse(coinmarketCurrencyPrice.PriceUsd) * capital;
+            //    USDGainedLost += capitalUSD;
+            //}
+            //
+            //GainsUSD = USDGainedLost;
+
+
+
+
+
+            //decimal heldAmount = Amount;
+            //decimal heldAsBTC = CoinValueBTC.Value;
+            //foreach (var trade in Trades.OrderByDescending(t => t.Time))
+            //{
+            //    //How much of this trade comprises our current held value.
+            //    if (trade.IsBuyer)
+            //    {
+            //        heldAmount -= trade.Quantity;
+            //
+            //        if (trade.SymbolCurrency == "BTC")
+            //        {
+            //            heldAsBTC -= trade.Price * trade.Quantity;
+            //        }
+            //        else
+            //        {
+            //            var mvm = MainViewModel.MainViewModels.FirstOrDefault();
+            //            var conversionPrice = mvm.AllPrices.Where(price => price.SymbolAsset == trade.SymbolAsset && price.SymbolCurrency == "BTC").SingleOrDefault();
+            //            // Held BTC -= this trades rate converted to BTC * quantity
+            //            //             this gets us the BTC value of that trade as it equates to now
+            //            heldAsBTC -= trade.Price / conversionPrice.Price * trade.Quantity;
+            //
+            //        }
+            //    }
+            //    else
+            //    {
+            //        heldAmount += trade.Quantity;
+            //        if (trade.SymbolCurrency == "BTC")
+            //        {
+            //            heldAsBTC += trade.Price * trade.Quantity;
+            //        }
+            //        else
+            //        {
+            //            var mvm = MainViewModel.MainViewModels.FirstOrDefault();
+            //            var conversionPrice = mvm.AllPrices.Where(price => price.SymbolAsset == trade.SymbolAsset && price.SymbolCurrency == "BTC").SingleOrDefault();
+            //            // Held BTC += this trades rate converted to BTC * quantity
+            //            //             this gets us the BTC value of that trade as it equates to now
+            //            heldAsBTC += trade.Price / conversionPrice.Price * trade.Quantity;
+            //        }
+            //    }
+            //}
+            //
+            //// We now have the orginal value of the BTC we started with
+            //// convert this currency to BTC and see percent diff
+            //
+            //GainsPercentage = ((heldAsBTC / ValueBTC.Value) - 1) * 100;
         }
     }
 }
