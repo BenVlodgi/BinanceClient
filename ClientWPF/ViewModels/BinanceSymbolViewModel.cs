@@ -664,6 +664,16 @@ namespace Binance.Net.ClientWPF.ViewModels
 
             double[] close = this.Klines.Select(k => (double)k.Close).ToArray();
 
+            if (close.Length < macdLookback)
+            {
+                // We don't have enough data to fill these
+                // fill these with empties, and get out
+                outMACDRslt = Enumerable.Repeat(double.NaN, close.Length).ToArray();
+                outMACDSign = Enumerable.Repeat(double.NaN, close.Length).ToArray();
+                outMACDHist = Enumerable.Repeat(double.NaN, close.Length).ToArray();
+                return;
+            }
+
             outMACDRslt = new double[close.Length - macdLookback];
             outMACDSign = new double[close.Length - macdLookback];
             outMACDHist = new double[close.Length - macdLookback];
@@ -708,6 +718,14 @@ namespace Binance.Net.ClientWPF.ViewModels
             //rsiLookback = rsiLookback < 0 ? 0 : rsiLookback;
 
             double[] close = this.Klines.Select(k => (double)k.Close).ToArray();
+            
+            if (close.Length < rsiLookback)
+            {
+                // We don't have enough data to fill this
+                // fill this with empties, and get out
+                outRSI = Enumerable.Repeat(double.NaN, close.Length).ToArray();
+                return;
+            }
 
             outRSI = new double[close.Length - rsiLookback];
             Core.Rsi(rsiLookback, close.Length - 1, close, period, out int outBegIdx, out int outNbElement, outRSI);
