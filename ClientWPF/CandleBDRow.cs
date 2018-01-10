@@ -8,8 +8,8 @@ using Binance.Net.Objects;
 
 namespace Binance.Net.ClientWPF
 {
-    [DBTable]
-    public class Candle :StorageTableBase<Candle>
+    [DBTable(OverrideTableName = "Candle")]
+    public class CandleDBRow :StorageTableBase<CandleDBRow>
     {
         [DBProperty(primaryKeyLevel: 0)]
         public int Exchange { get; set; }
@@ -54,8 +54,8 @@ namespace Binance.Net.ClientWPF
         [DBProperty]
         public decimal TakerBuyQuoteAssetVolume { get; set; }
 
-        public Candle() { }
-        public Candle(BinanceKline klineCandle, string tradePair, KlineInterval interval)
+        public CandleDBRow() { }
+        public CandleDBRow(BinanceKline klineCandle, string tradePair, KlineInterval interval)
         {
             Exchange = 1; // Binance
             TradePair = tradePair;
