@@ -38,14 +38,14 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Binance.Net, Version=2.1.5.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Binance.Net.2.1.5\lib\netstandard2.0\Binance.Net.dll</HintPath>
+    <Reference Include="Binance.Net, Version=2.2.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Binance.Net.2.2.0\lib\netstandard2.0\Binance.Net.dll</HintPath>
     </Reference>
     <Reference Include="EntityFramework, Version=6.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL">
-      <HintPath>..\packages\EntityFramework.6.0.0\lib\net45\EntityFramework.dll</HintPath>
+      <HintPath>..\packages\EntityFramework.6.2.0\lib\net45\EntityFramework.dll</HintPath>
     </Reference>
     <Reference Include="EntityFramework.SqlServer, Version=6.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL">
-      <HintPath>..\packages\EntityFramework.6.0.0\lib\net45\EntityFramework.SqlServer.dll</HintPath>
+      <HintPath>..\packages\EntityFramework.6.2.0\lib\net45\EntityFramework.SqlServer.dll</HintPath>
     </Reference>
     <Reference Include="FubarCoder.RestSharp.Portable.Core, Version=4.0.0.0, Culture=neutral, PublicKeyToken=be81bb0f53eab22f, processorArchitecture=MSIL">
       <HintPath>..\packages\FubarCoder.RestSharp.Portable.Core.4.0.8\lib\net45\FubarCoder.RestSharp.Portable.Core.dll</HintPath>
@@ -64,7 +64,7 @@
       <Private>True</Private>
     </Reference>
     <Reference Include="NoobsMuc.Coinmarketcap.Client, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\NoobsMuc.Coinmarketcap.Client.1.0.1\lib\net461\NoobsMuc.Coinmarketcap.Client.dll</HintPath>
+      <HintPath>..\packages\NoobsMuc.Coinmarketcap.Client.1.0.2\lib\net461\NoobsMuc.Coinmarketcap.Client.dll</HintPath>
     </Reference>
     <Reference Include="SuperSocket.ClientEngine, Version=0.9.0.0, Culture=neutral, PublicKeyToken=ee9af13f57f00acc, processorArchitecture=MSIL">
       <HintPath>..\packages\SuperSocket.ClientEngine.Core.0.9.0\lib\net45\SuperSocket.ClientEngine.dll</HintPath>
@@ -88,15 +88,15 @@
     <Reference Include="System.Net.NameResolution, Version=4.0.1.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <HintPath>..\packages\System.Net.NameResolution.4.3.0\lib\net46\System.Net.NameResolution.dll</HintPath>
     </Reference>
-    <Reference Include="System.Net.Security, Version=4.0.1.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-      <HintPath>..\packages\System.Net.Security.4.3.0\lib\net46\System.Net.Security.dll</HintPath>
+    <Reference Include="System.Net.Security, Version=4.0.1.2, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Net.Security.4.3.2\lib\net46\System.Net.Security.dll</HintPath>
     </Reference>
     <Reference Include="System.Net.Sockets, Version=4.1.1.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <HintPath>..\packages\System.Net.Sockets.4.3.0\lib\net46\System.Net.Sockets.dll</HintPath>
     </Reference>
     <Reference Include="System.Runtime.Serialization" />
     <Reference Include="System.Security.Cryptography.Algorithms, Version=4.1.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-      <HintPath>..\packages\System.Security.Cryptography.Algorithms.4.3.0\lib\net461\System.Security.Cryptography.Algorithms.dll</HintPath>
+      <HintPath>..\packages\System.Security.Cryptography.Algorithms.4.3.1\lib\net461\System.Security.Cryptography.Algorithms.dll</HintPath>
     </Reference>
     <Reference Include="System.Security.Cryptography.Encoding, Version=4.0.1.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <HintPath>..\packages\System.Security.Cryptography.Encoding.4.3.0\lib\net46\System.Security.Cryptography.Encoding.dll</HintPath>
@@ -104,8 +104,8 @@
     <Reference Include="System.Security.Cryptography.Primitives, Version=4.0.1.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <HintPath>..\packages\System.Security.Cryptography.Primitives.4.3.0\lib\net46\System.Security.Cryptography.Primitives.dll</HintPath>
     </Reference>
-    <Reference Include="System.Security.Cryptography.X509Certificates, Version=4.1.1.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-      <HintPath>..\packages\System.Security.Cryptography.X509Certificates.4.3.0\lib\net461\System.Security.Cryptography.X509Certificates.dll</HintPath>
+    <Reference Include="System.Security.Cryptography.X509Certificates, Version=4.1.1.2, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Security.Cryptography.X509Certificates.4.3.2\lib\net461\System.Security.Cryptography.X509Certificates.dll</HintPath>
     </Reference>
     <Reference Include="System.Xml" />
     <Reference Include="Microsoft.CSharp" />
@@ -236,6 +236,9 @@
   </ItemGroup>
   <ItemGroup>
     <Resource Include="Resources\settings.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Converters\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="..\packages\System.Data.SQLite.Core.1.0.106.0\build\net46\System.Data.SQLite.Core.targets" Condition="Exists('..\packages\System.Data.SQLite.Core.1.0.106.0\build\net46\System.Data.SQLite.Core.targets')" />
