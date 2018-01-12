@@ -21,6 +21,9 @@ namespace Binance.Net.ClientWPF
             ,"TRIG","LUN","NAV","APPC","VIBE"
         };
 
+        private static string[] currencySymbols = new string[] { "BTC", "ETH", "BNB", "USDT" };
+
+
         private static Dictionary<string, string> symbolReplacements = new Dictionary<string, string>()
         {
             { "IOTA", "MIOTA" }
@@ -38,6 +41,19 @@ namespace Binance.Net.ClientWPF
 
         public static string[] SplitTradeSymbols(string symbols)
         {
+
+            // New way that relies on knowing all the tradable currencies
+            foreach (var currency in currencySymbols)
+            {
+                if (symbols.Substring(symbols.Length - currency.Length) == currency)
+                {
+                    return new string[] {  symbols.Substring(0, symbols.Length - currency.Length), currency };
+                }
+            }
+            return new string[0];
+
+            /* 
+            // Old way that could get any combination of symbols
             int length = symbols.Length;
             var firsts = new List<string>();
             var seconds = new List<string>();
@@ -57,6 +73,7 @@ namespace Binance.Net.ClientWPF
 
             }
             return new string[0];
+            */
         }
 
 
