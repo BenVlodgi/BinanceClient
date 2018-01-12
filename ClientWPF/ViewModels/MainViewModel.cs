@@ -295,16 +295,17 @@ namespace Binance.Net.ClientWPF
         {
             if (SelectedSymbol is null)
                 return;
+            var symbol = SelectedSymbol;
 
             using (var client = new BinanceClient())
             {
-                var result = client.Get24HPrice(SelectedSymbol.Symbol);
+                var result = client.Get24HPrice(symbol.Symbol);
                 if (result.Success)
                 {
-                    SelectedSymbol.HighPrice = result.Data.HighPrice;
-                    SelectedSymbol.LowPrice = result.Data.LowPrice;
-                    SelectedSymbol.Volume = result.Data.Volume;
-                    SelectedSymbol.PriceChangePercent = result.Data.PriceChangePercent;
+                    symbol.HighPrice = result.Data.HighPrice;
+                    symbol.LowPrice = result.Data.LowPrice;
+                    symbol.Volume = result.Data.Volume;
+                    symbol.PriceChangePercent = result.Data.PriceChangePercent;
                 }
                 else
                     messageBoxService.ShowMessage($"Error getting 24 hour stats.\n{result.Error.Message}", $"Error Code: {result.Error.Code}", MessageBoxButton.OK, MessageBoxImage.Error);
