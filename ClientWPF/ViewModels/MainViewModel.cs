@@ -24,6 +24,7 @@ namespace Binance.Net.ClientWPF
         public Func<double, string> NumberFormatter { get { return (value) => value.ToString("#0.##########"); } }
         public Func<DateTime, string> DateHoursFormatter { get { return (value) => value.UTCToLocal().ToString("MMM d, h:00"); } }
 
+        public List<KlineInterval> KlineIntervals = Enum.GetValues(typeof(KlineInterval)).Cast<KlineInterval>().ToList();
 
 
         private ObservableCollection<BinanceSymbolViewModel> allPrices;
@@ -226,7 +227,7 @@ namespace Binance.Net.ClientWPF
             {
                 using (var client = new BinanceClient())
                 {
-                    var result = client.PlaceOrder(SelectedSymbol.Symbol, OrderSide.Buy, OrderType.Limit, TimeInForce.GoodTillCancel, SelectedSymbol.TradeAmount, SelectedSymbol.TradePrice);
+                    var result = client.PlaceOrder(SelectedSymbol.Symbol, OrderSide.Buy, OrderType.Limit, SelectedSymbol.TradeAmount, price: SelectedSymbol.TradePrice, timeInForce: TimeInForce.GoodTillCancel);
                     if (result.Success)
                         messageBoxService.ShowMessage("Order placed!", "Sucess", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
                     else
@@ -241,7 +242,7 @@ namespace Binance.Net.ClientWPF
             {
                 using (var client = new BinanceClient())
                 {
-                    var result = client.PlaceOrder(SelectedSymbol.Symbol, OrderSide.Sell, OrderType.Limit, TimeInForce.GoodTillCancel, SelectedSymbol.TradeAmount, SelectedSymbol.TradePrice);
+                    var result = client.PlaceOrder(SelectedSymbol.Symbol, OrderSide.Sell, OrderType.Limit, SelectedSymbol.TradeAmount, price: SelectedSymbol.TradePrice, timeInForce: TimeInForce.GoodTillCancel);
                     if (result.Success)
                         messageBoxService.ShowMessage("Order placed!", "Sucess", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
                     else
@@ -297,7 +298,7 @@ namespace Binance.Net.ClientWPF
 
             using (var client = new BinanceClient())
             {
-                var result = client.Get24HPrices(SelectedSymbol.Symbol);
+                var result = client.Get24HPrice(SelectedSymbol.Symbol);
                 if (result.Success)
                 {
                     SelectedSymbol.HighPrice = result.Data.HighPrice;
