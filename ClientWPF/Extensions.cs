@@ -123,5 +123,21 @@ namespace Binance.Net.ClientWPF
             point.Low = (double)newKline.Low;
             point.Close = (double)newKline.Close;
         }
+
+        public static void AddOrOverwrite<TK, TV>(this Dictionary<TK, TV> dictionary, TK key, TV value)
+        {
+            if (dictionary.ContainsKey(key))
+                dictionary[key] = value;
+            else
+                dictionary.Add(key, value);
+
+        }
+
+        public static TV GetValueOrDefault<TK, TV>(this Dictionary<TK, TV> dictionary, TK key)
+        {
+            return dictionary.ContainsKey(key)
+                ? dictionary[key]
+                : default(TV);
+        }
     }
 }
