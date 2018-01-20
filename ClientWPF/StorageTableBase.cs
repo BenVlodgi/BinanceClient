@@ -28,6 +28,7 @@ namespace Binance.Net.ClientWPF
 
         public bool Save()
         {
+            /*
             if (Connection == null)
                 return false;
 
@@ -50,6 +51,7 @@ namespace Binance.Net.ClientWPF
                 if (connectionOpen)
                     Connection.Close();
             }
+            */
             return true;
         }
 
