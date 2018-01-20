@@ -15,14 +15,15 @@
             <BitmapImage x:Key="Settings" UriSource="Resources/settings.png"/>
             <BooleanToVisibilityConverter x:Key="BoolToVis" />
             <local:NullVisibilityConverter x:Key="NullToVisibilityConverter"/>
+            <local:IndicatorMACDColorConverter x:Key="IndicatorMACDColorConverter" />
         </ResourceDictionary>
     </Window.Resources>
     <Window.DataContext>
-        <local:MainViewModel/>
+        <local:MainViewModel />
     </Window.DataContext>
     <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="270" />
+            <ColumnDefinition Width="420" />
             <ColumnDefinition Width="650" />
             <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
@@ -45,11 +46,53 @@
         </Button>
 
         <ListView Grid.Row="0" Grid.RowSpan="2" Margin="5" ItemsSource="{Binding AllPrices}" SelectedItem="{Binding SelectedSymbol}">
+            <ListView.Resources>
+                <Style x:Key="MACDStyle" TargetType="{x:Type ListViewItem}">
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding MACDStatus}" Value="Growing">
+                            <Setter Property="Background" Value="Green" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </ListView.Resources>
+            <ListView.ItemContainerStyle>
+                <Style TargetType="{x:Type ListViewItem}">
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding ElementName}" Value="Growing">
+                            <Setter Property="Background" Value="Green" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </ListView.ItemContainerStyle>
             <ListView.View>
                 <GridView>
                     <GridViewColumn Width="50" Header="Asset" DisplayMemberBinding="{Binding SymbolAsset}"/>
                     <GridViewColumn Width="50" Header="Currency" DisplayMemberBinding="{Binding SymbolCurrency}"/>
                     <GridViewColumn Width="120" Header="Price" DisplayMemberBinding="{Binding Price, StringFormat=\{0:#\,#.00000000\}}"/>
+
+                    <!--
+                    <GridViewColumn Width="80" Header="MACD">
+                        <GridViewColumn.CellTemplate>
+                            <DataTemplate>
+                                <Grid Background="AliceBlue">
+                                    <TextBlock Text="{Binding MACDStatus}" Background="{Binding MACDStatus, Converter={StaticResource IndicatorMACDColorConverter}}" />
+                                </Grid>
+                            </DataTemplate>
+                        </GridViewColumn.CellTemplate>
+                    </GridViewColumn>
+                    -->
+                    <!--
+                    <Style TargetType="{x:Type ListViewItem}">
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding MACDStatus}" Value="Growing">
+                                <Setter Property="Background" Value="Green" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                    -->
+                    <GridViewColumn Width="80" Header="MACD" DisplayMemberBinding="{Binding MACDStatus, NotifyOnTargetUpdated=True}" />
+                    <!--<GridViewColumn Width="80" Header="MACD" DisplayMemberBinding="{Binding MACDStatus, NotifyOnTargetUpdated=True}" />-->
+                    <GridViewColumn Width="80" Header="RSI" DisplayMemberBinding="{Binding RSIStatus, NotifyOnTargetUpdated=True}" />
                 </GridView>
             </ListView.View>
         </ListView>
@@ -72,7 +115,7 @@
                     <RowDefinition />
                     <RowDefinition />
                 </Grid.RowDefinitions>
-<!--
+                <!--
                 <StackPanel Grid.Row="0">
                     <TextBlock Text="Candle Interval" />
                     <ComboBox  />
@@ -102,7 +145,7 @@
 
                     </Grid>
                 </GroupBox>
-                
+
                 <GroupBox Grid.Row="3" Header="MACD">
                     <Grid Visibility="{Binding SelectedSymbol, Converter={StaticResource NullToVisibilityConverter}}">
                         <lvc:CartesianChart Series="{Binding SelectedSymbol.MACDPlot}" Visibility="{Binding SelectedSymbol.MACDPlot, Converter={StaticResource NullToVisibilityConverter}}" AnimationsSpeed="0:0:0.01">
@@ -165,7 +208,7 @@
                                                 <SolidColorBrush Color="PaleGreen" Opacity=".4"></SolidColorBrush>
                                             </lvc:AxisSection.Fill>
                                         </lvc:AxisSection>
-                                        
+
                                         <lvc:AxisSection Value="30" StrokeThickness="3">
                                             <lvc:AxisSection.Fill>
                                                 <SolidColorBrush Color="Black" Opacity="1"></SolidColorBrush>
@@ -219,7 +262,7 @@
                 <GroupBox.Header>
                     <TextBlock Text="Ledger Trades" FontSize="20"/>
                 </GroupBox.Header>
-                <ListView Grid.Row="0" Grid.RowSpan="2" Margin="5" ItemsSource="{Binding SelectedLedgerAsset.Trades, NotifyOnTargetUpdated=True}" SelectedItem="{Binding SelectedLedgerAsset}" TargetUpdated="Grid_Updated" ButtonBase.Click="SortClick">
+                <ListView Grid.Row="0" Grid.RowSpan="2" Margin="5" ItemsSource="{Binding SelectedLedgerAsset.Trades, NotifyOnTargetUpdated=True}" SelectedItem="{Binding SelectedLedgerTrade}" TargetUpdated="Grid_Updated" ButtonBase.Click="SortClick">
                     <ListView.View>
                         <GridView>
                             <GridViewColumn Width="50" Header="Asset" DisplayMemberBinding="{Binding SymbolAsset}"/>
