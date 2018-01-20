@@ -76,6 +76,11 @@ namespace Binance.Net.ClientWPF
             */
         }
 
+        public static void OpenURL(string value)
+        {
+            System.Diagnostics.Process.Start(value);
+        }
+
 
 
     }
