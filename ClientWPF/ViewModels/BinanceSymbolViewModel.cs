@@ -12,11 +12,15 @@ using System.Windows;
 using TicTacTec.TA.Library;
 using System.Windows.Media;
 using System.Threading.Tasks;
+using Binance.Net.ClientWPF.MessageBox;
 
 namespace Binance.Net.ClientWPF.ViewModels
 {
     public class BinanceSymbolViewModel : ObservableObject
     {
+        public string BinanceTradeURL { get { return @"https://www.binance.com/trade.html?symbol=" + SymbolAsset + "_" + SymbolCurrency; } }
+        public string BinanceTradeDetailURL { get { return @"https://www.binance.com/tradeDetail.html?symbol=" + SymbolAsset + "_" + SymbolCurrency; } }
+
         private void EnsureSymbolPairs(bool force = false)
         {
             if (symbolPair.Length == 0 || force)
@@ -185,6 +189,7 @@ namespace Binance.Net.ClientWPF.ViewModels
 
         #region Charts
 
+        #region KlineInterval
         private KlineInterval klineInterval = KlineInterval.OneHour;
         public KlineInterval KlineInterval
         {
@@ -196,6 +201,7 @@ namespace Binance.Net.ClientWPF.ViewModels
                 RaisePropertyChangedEvent("Klines");
             }
         }
+        #endregion
 
         #region Klines
         private Dictionary<KlineInterval, ObservableCollection<BinanceKline>> klinesDictionary = Enum.GetValues(typeof(KlineInterval)).Cast<KlineInterval>().ToDictionary(val => val, val => new ObservableCollection<BinanceKline>());
@@ -388,7 +394,7 @@ namespace Binance.Net.ClientWPF.ViewModels
         bool updateHistoryWhenFinished = false;
         public void GetHistory(Storage storageInstance)
         {
-            if(gettingHistory)
+            if (gettingHistory)
             {
                 updateHistoryWhenFinished = true;
                 return;
@@ -397,7 +403,11 @@ namespace Binance.Net.ClientWPF.ViewModels
             gettingHistory = true;
             DateTime now = DateTime.UtcNow;
 
-            string symbol = Symbol;
+
+            if (string.IsNullOrWhiteSpace(MACDStatus)) MACDStatus = "Aquiring";
+            if (string.IsNullOrWhiteSpace(RSIStatus)) RSIStatus = "Aquiring";
+
+            
 
             int haveAtleastThisManyKlines = 72;
 
@@ -430,21 +440,25 @@ namespace Binance.Net.ClientWPF.ViewModels
                 var usedSymbol = Symbol;
 
                 var result = client.GetKlines(usedSymbol, usedInterval, start);
-
-                //TODO: USe Parallete
-                //result.Data.AsParallel().ForAll(kline => new CandleDBRow(kline, usedSymbol, usedInterval) { Connection = storageInstance.DBConnection }.Save());
-
-                foreach (var kline in result.Data)
+                if (result.Success)
                 {
-                    new CandleDBRow(kline, usedSymbol, usedInterval) { Connection = storageInstance.DBConnection }.Save();
-                }
+                    //TODO: Use Parallel
+                    //result.Data.AsParallel().ForAll(kline => new CandleDBRow(kline, SymbolAsset, SymbolCurrency, usedInterval) { Connection = storageInstance.DBConnection }.Save());
 
-                AddKlines(KlineInterval.OneHour, result.Data.ToList());
+                    foreach (var kline in result.Data)
+                    {
+                        new CandleDBRow(kline, SymbolAsset, SymbolCurrency, usedInterval) { Connection = storageInstance.DBConnection }.Save();
+                    }
+
+                    AddKlines(KlineInterval.OneHour, result.Data.ToList());
+                }
+                else new MessageBoxService().ShowMessage($"Getting Candles for symbol {Symbol} failed: {result.Error.Message}", $"Code: {result.Error.Code}", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+
             }
 
 
             gettingHistory = false;
-            if(updateHistoryWhenFinished)
+            if (updateHistoryWhenFinished)
             {
                 updateHistoryWhenFinished = false;
                 GetHistory(storageInstance);
@@ -605,7 +619,7 @@ namespace Binance.Net.ClientWPF.ViewModels
                 {
                     var macdSeries = MACDPlot.Where(cs => cs.Title == "MACD").FirstOrDefault();
                     foreach (var itr in indexesToReplace) macdSeries.Values[itr.Key] = outMACD[itr.Key];
-                    foreach (var ita in indexesToAppend)macdSeries.Values.Add(outMACD[ita]);
+                    foreach (var ita in indexesToAppend) macdSeries.Values.Add(outMACD[ita]);
 
                     var macdSignalSeries = MACDPlot.Where(cs => cs.Title == "MACD Signal").FirstOrDefault();
                     foreach (var itr in indexesToReplace) macdSignalSeries.Values[itr.Key] = outMACDSignal[itr.Key];
@@ -718,7 +732,7 @@ namespace Binance.Net.ClientWPF.ViewModels
             //rsiLookback = rsiLookback < 0 ? 0 : rsiLookback;
 
             double[] close = this.Klines.Select(k => (double)k.Close).ToArray();
-            
+
             if (close.Length < rsiLookback)
             {
                 // We don't have enough data to fill this
