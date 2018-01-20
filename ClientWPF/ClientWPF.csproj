@@ -38,8 +38,8 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Binance.Net, Version=2.2.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Binance.Net.2.2.0\lib\netstandard2.0\Binance.Net.dll</HintPath>
+    <Reference Include="Binance.Net, Version=2.2.3.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Binance.Net.2.2.3\lib\netstandard2.0\Binance.Net.dll</HintPath>
     </Reference>
     <Reference Include="EntityFramework, Version=6.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL">
       <HintPath>..\packages\EntityFramework.6.2.0\lib\net45\EntityFramework.dll</HintPath>
@@ -159,17 +159,19 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
-    <Compile Include="CandleBDRow.cs" />
+    <Compile Include="Tables\CandleBDRow.cs" />
     <Compile Include="CoinMarket.cs" />
+    <Compile Include="Converters\IndicatorMACDColorConverter.cs" />
     <Compile Include="Extensions.cs" />
     <Compile Include="Global.cs" />
     <Compile Include="MessageBox\IMessageBoxService.cs" />
     <Compile Include="MessageBox\MessageBoxService.cs" />
-    <Compile Include="NullVisibilityConverter.cs" />
+    <Compile Include="Converters\NullVisibilityConverter.cs" />
     <Compile Include="SortAdorner.cs" />
     <Compile Include="Storage.cs" />
     <Compile Include="StorageAttributes.cs" />
     <Compile Include="StorageTableBase.cs" />
+    <Compile Include="Tables\SymbolIndicatorDBRow.cs" />
     <Compile Include="UserControls\SettingsWindow.xaml.cs">
       <DependentUpon>SettingsWindow.xaml</DependentUpon>
     </Compile>
@@ -237,9 +239,7 @@
   <ItemGroup>
     <Resource Include="Resources\settings.png" />
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Converters\" />
-  </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="..\packages\System.Data.SQLite.Core.1.0.106.0\build\net46\System.Data.SQLite.Core.targets" Condition="Exists('..\packages\System.Data.SQLite.Core.1.0.106.0\build\net46\System.Data.SQLite.Core.targets')" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
