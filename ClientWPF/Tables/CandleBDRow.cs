@@ -8,57 +8,43 @@ using Binance.Net.Objects;
 
 namespace Binance.Net.ClientWPF
 {
-    [DBTable(OverrideTableName = "Candle")]
-    public class CandleDBRow :StorageTableBase<CandleDBRow>
+    [DBTable("Candle")]
+    public class CandleDBRow : StorageTableBase<CandleDBRow>
     {
-        [DBProperty(primaryKeyLevel: 0)]
-        public int Exchange { get; set; }
-
-        [DBProperty(primaryKeyLevel: 0)]
-        public string TradePair { get; set; }
-
-        [DBProperty(primaryKeyLevel: 0)]
-        public KlineInterval Interval { get; set; }
+        [DBProperty(primaryKeyLevel: 0)] public int Exchange { get; set; }
+        [DBProperty(primaryKeyLevel: 0)] public string Asset { get; set; }
+        [DBProperty(primaryKeyLevel: 0)] public string Currency { get; set; }
+        [DBProperty(primaryKeyLevel: 0)] public KlineInterval Interval { get; set; }
 
         /// <summary> The time this candlestick opened </summary>
-        [DBProperty(primaryKeyLevel:0)]
-        public DateTime OpenTime { get; set; }
+        [DBProperty(primaryKeyLevel: 0)] public DateTime OpenTime { get; set; }
         /// <summary> The price at which this candlestick opened </summary>
-        [DBProperty]
-        public decimal Open { get; set; }
+        [DBProperty] public decimal Open { get; set; }
         /// <summary> The highest price in this candlestick </summary>
-        [DBProperty]
-        public decimal High { get; set; }
+        [DBProperty] public decimal High { get; set; }
         /// <summary> The lowest price in this candlestick </summary>
-        [DBProperty]
-        public decimal Low { get; set; }
+        [DBProperty] public decimal Low { get; set; }
         /// <summary> The price at which this candlestick closed </summary>
-        [DBProperty]
-        public decimal Close { get; set; }
+        [DBProperty] public decimal Close { get; set; }
         /// <summary> The volume traded during this candlestick </summary>
-        [DBProperty]
-        public decimal Volume { get; set; }
+        [DBProperty] public decimal Volume { get; set; }
         /// <summary> The close time of this candlestick </summary>
-        [DBProperty]
-        public DateTime CloseTime { get; set; }
+        [DBProperty] public DateTime CloseTime { get; set; }
         /// <summary> The volume traded during this candlestick in the asset form </summary>
-        [DBProperty]
-        public decimal AssetVolume { get; set; }
+        [DBProperty] public decimal AssetVolume { get; set; }
         /// <summary> The amount of trades in this candlestick </summary>
-        [DBProperty]
-        public int Trades { get; set; }
+        [DBProperty] public int Trades { get; set; }
         /// <summary> Taker buy base asset volume </summary>
-        [DBProperty]
-        public decimal TakerBuyBaseAssetVolume { get; set; }
+        [DBProperty] public decimal TakerBuyBaseAssetVolume { get; set; }
         /// <summary> Taker buy quote asset volume </summary>
-        [DBProperty]
-        public decimal TakerBuyQuoteAssetVolume { get; set; }
+        [DBProperty] public decimal TakerBuyQuoteAssetVolume { get; set; }
 
         public CandleDBRow() { }
-        public CandleDBRow(BinanceKline klineCandle, string tradePair, KlineInterval interval)
+        public CandleDBRow(BinanceKline klineCandle, string asset, string currency, KlineInterval interval)
         {
             Exchange = 1; // Binance
-            TradePair = tradePair;
+            Asset = asset;
+            Currency = currency;
             Interval = interval;
             OpenTime = klineCandle.OpenTime;
             Open = klineCandle.Open;
