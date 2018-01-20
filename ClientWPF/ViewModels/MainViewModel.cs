@@ -13,6 +13,7 @@ using System.IO;
 
 using TicTacTec.TA.Library;
 using System;
+using System.Threading;
 
 namespace Binance.Net.ClientWPF
 {
@@ -47,9 +48,57 @@ namespace Binance.Net.ClientWPF
                 selectedSymbol = value;
                 RaisePropertyChangedEvent("SymbolIsSelected");
                 RaisePropertyChangedEvent("SelectedSymbol");
+
+                _selectedSymbolAsset = selectedSymbol?.SymbolAsset;
+                _selectedSymbolCurrency = selectedSymbol?.SymbolCurrency;
+                RaisePropertyChangedEvent("SelectedSymbolAsset");
+                RaisePropertyChangedEvent("SelectedSymbolCurrency");
+
+                RaisePropertyChangedEvent("SelectedSymbolAssetOptions");
+                RaisePropertyChangedEvent("SelectedSymbolCurrencyOptions");
+
                 ChangeSymbol();
             }
         }
+
+        #region SelectedSymbolAsset
+        private string _selectedSymbolAsset;
+        public string SelectedSymbolAsset
+        {
+            get { return _selectedSymbolAsset; }
+            set
+            {
+                if (_selectedSymbolAsset == value) return;
+                _selectedSymbolAsset = value;
+
+                SelectedSymbol = AllPrices.Where(price => price.SymbolAsset == SelectedSymbolAsset && price.SymbolCurrency == SelectedSymbolCurrency).FirstOrDefault();
+
+                //RaisePropertyChangedEvent("SelectedSymbolAsset");
+            }
+        }
+        #endregion
+        #region SelectedSymbolCurrency
+        private string _selectedSymbolCurrency;
+        public string SelectedSymbolCurrency
+        {
+            get { return _selectedSymbolCurrency; }
+            set
+            {
+                if (_selectedSymbolCurrency == value) return;
+                _selectedSymbolCurrency = value;
+
+                SelectedSymbol = AllPrices.Where(price => price.SymbolAsset == SelectedSymbolAsset && price.SymbolCurrency == SelectedSymbolCurrency).FirstOrDefault();
+
+                //RaisePropertyChangedEvent("SelectedSymbolCurrency");
+            }
+        }
+        #endregion
+
+        public ObservableCollection<string> SelectedSymbolAssetOptions { get { return SelectedSymbolCurrency == null ? null : CurrencyDictionary?.GetValueOrDefault(SelectedSymbolCurrency); } }
+        public ObservableCollection<string> SelectedSymbolCurrencyOptions { get { return SelectedSymbolAsset == null ? null : AssetDictionary?.GetValueOrDefault(SelectedSymbolAsset); } }
+
+        public Dictionary<string, ObservableCollection<string>> CurrencyDictionary { get; protected set; } = new Dictionary<string, ObservableCollection<string>>();
+        public Dictionary<string, ObservableCollection<string>> AssetDictionary { get; protected set; } = new Dictionary<string, ObservableCollection<string>>();
 
         public bool SymbolIsSelected
         {
@@ -68,7 +117,33 @@ namespace Binance.Net.ClientWPF
 
                 if (value != null)
                 {
-                    SelectedSymbol = AllPrices?.Where(symbol => symbol.Symbol == $"{value.Asset}BTC").FirstOrDefault();
+                    if (SelectedSymbolAssetOptions != null && SelectedSymbolAssetOptions.Contains(value.Asset))
+                        SelectedSymbolAsset = value.Asset;
+                    else if (value.Asset == "BTC" && (SelectedSymbolCurrency == "BTC" || string.IsNullOrWhiteSpace(SelectedSymbolCurrency)))
+                        SelectedSymbol = AllPrices?.Where(symbol => symbol.Symbol == $"BTCUSDT").FirstOrDefault();
+                    else
+                        SelectedSymbol = AllPrices?.Where(symbol => symbol.Symbol == $"{value.Asset}BTC").FirstOrDefault();
+                }
+            }
+        }
+        #endregion
+
+        #region SelectedLedgerTrade
+        private TradeViewModel _selectedLedgerTrade;
+        public TradeViewModel SelectedLedgerTrade
+        {
+            get { return _selectedLedgerTrade; }
+            set
+            {
+                if (_selectedLedgerTrade != value)
+                {
+                    _selectedLedgerTrade = value;
+                    RaisePropertyChangedEvent("SelectedLedgerTrade");
+                }
+
+                if (value != null && SelectedSymbolCurrency != value.SymbolCurrency)
+                {
+                    SelectedSymbolCurrency = value.SymbolCurrency;
                 }
             }
         }
@@ -200,9 +275,22 @@ namespace Binance.Net.ClientWPF
 
             binanceSocketClient = new BinanceSocketClient();
 
-            Task.Run(() => GetAllSymbols());
+            var allSymbolsTask = Task.Run(() => GetAllSymbols());
 
             SubscribeUserStream();
+
+            allSymbolsTask.Wait();
+
+
+            Task.Run(() =>
+            {
+                // Doing this voilates the ratelimit
+                //GetAllHistory("BTC");
+                //GetAllHistory("ETH");
+                //GetAllHistory("USDT");
+                //GetAllHistory("BNB");
+            });
+
         }
 
         public void Cancel(object o)
@@ -271,7 +359,31 @@ namespace Binance.Net.ClientWPF
             {
                 var result = await client.GetAllPricesAsync();
                 if (result.Success)
+                {
                     AllPrices = new ObservableCollection<BinanceSymbolViewModel>(result.Data.Select(r => new BinanceSymbolViewModel(r.Symbol, r.Price)).OrderBy(s => s.SymbolCurrency).ThenBy(s => s.SymbolAsset).ToList());
+
+                    foreach (var price in AllPrices)
+                    {
+                        if (CurrencyDictionary.ContainsKey(price.SymbolCurrency))
+                        {
+                            if (!CurrencyDictionary[price.SymbolCurrency].Contains(price.SymbolAsset))
+                                CurrencyDictionary[price.SymbolCurrency].Add(price.SymbolAsset);
+                        }
+                        else CurrencyDictionary.Add(price.SymbolCurrency, new ObservableCollection<string> { price.SymbolAsset });
+
+                        if (AssetDictionary.ContainsKey(price.SymbolAsset))
+                        {
+                            if (!AssetDictionary[price.SymbolAsset].Contains(price.SymbolCurrency))
+                                AssetDictionary[price.SymbolAsset].Add(price.SymbolCurrency);
+                        }
+                        else AssetDictionary.Add(price.SymbolAsset, new ObservableCollection<string> { price.SymbolCurrency });
+                    }
+
+                    var cdKeys = CurrencyDictionary.Keys.ToList();
+                    var adKeys = AssetDictionary.Keys.ToList();
+                    for (int k = 0; k < cdKeys.Count; k++) CurrencyDictionary[cdKeys[k]] = new ObservableCollection<string>(CurrencyDictionary[cdKeys[k]].OrderBy(v => v));
+                    for (int k = 0; k < adKeys.Count; k++) AssetDictionary[adKeys[k]] = new ObservableCollection<string>(AssetDictionary[adKeys[k]].OrderBy(v => v));
+                }
                 else
                     messageBoxService.ShowMessage($"Error getting all symbols data.\n{result.Error.Message}", $"Error Code: {result.Error.Code}", MessageBoxButton.OK, MessageBoxImage.Error);
             }
@@ -314,8 +426,8 @@ namespace Binance.Net.ClientWPF
 
         private void GetOrders(BinanceSymbolViewModel symbol = null)
         {
-            if (symbol == null)
-                symbol = SelectedSymbol;
+            if (symbol == null) symbol = SelectedSymbol;
+            if (symbol == null) return;
 
             using (var client = new BinanceClient())
             {
@@ -389,8 +501,9 @@ namespace Binance.Net.ClientWPF
                     if (accountResult.Success)
                     {
                         Assets = new ObservableCollection<AssetViewModel>(accountResult.Data.Balances.Where(b => b.Free != 0 || b.Locked != 0).Select(b => new AssetViewModel() { Asset = b.Asset, Free = b.Free, Locked = b.Locked }).ToList());
-                        Ledger = new ObservableCollection<LedgerAssetViewModel>(accountResult.Data.Balances.Where(b => b.Free != 0 || b.Locked != 0).Select(b => new LedgerAssetViewModel() { Asset = b.Asset, Amount = b.Total }).OrderByDescending(ledge => ledge.ValueUSD).ToList());
+                        Ledger = new ObservableCollection<LedgerAssetViewModel>(accountResult.Data.Balances.Where(b => b.Free != 0 || b.Locked != 0 || b.Asset =="MTH").Select(b => new LedgerAssetViewModel() { Asset = b.Asset, Amount = b.Total }).OrderByDescending(ledge => ledge.ValueUSD).ToList());
 
+                        GetLedgerHistory();
                         GetLedgerTrades();
                     }
                     else
@@ -412,15 +525,21 @@ namespace Binance.Net.ClientWPF
                 {
                     var symbol = SelectedSymbol; // use this to check if we should cancel because the symbol has changed
 
-                    if (!String.IsNullOrEmpty(ApiKey) && !String.IsNullOrEmpty(ApiSecret))
-                        GetOrders();
+                    //Thread.Sleep(100); // Incase the user is blowing through items // doesn't seem to help
 
-                    if (symbol != SelectedSymbol) return;
-                    //GetTrades();
-                    if (symbol != SelectedSymbol) return;
-                    Get24HourStats();
-                    if (symbol != SelectedSymbol) return;
-                    SelectedSymbol.GetHistory(storage);
+                    // check again, because this is async, symbol might be null now
+                    if (symbol != null || symbol != SelectedSymbol)
+                    {
+                        if (!String.IsNullOrEmpty(ApiKey) && !String.IsNullOrEmpty(ApiSecret))
+                            GetOrders();
+
+                        if (symbol != SelectedSymbol) return;
+                        //GetTrades();
+                        if (symbol != SelectedSymbol) return;
+                        Get24HourStats();
+                        if (symbol != SelectedSymbol) return;
+                        symbol.GetHistory(storage);
+                    }
                 });
             }
 
@@ -442,50 +561,51 @@ namespace Binance.Net.ClientWPF
                     else ledge.Amount = balance.Total;
                 }
                 else if (ledge != null)
-                    Ledger.Remove(ledge);
+                    Ledger.Remove(ledge); // needs to be dispatched
             }
             //GetLedgerTrades();
         }
 
         private void GetLedgerTrades()
         {
-            if (Ledger == null)
-                return;
+            if (Ledger == null) return;
 
-            var tradingCurrencies = new string[] { "BTC", "ETH", "BNB", "USDT" };
-            foreach (var ledge in Ledger)
+            new Task(() => Ledger.AsParallel().ForAll(ledge => AllPrices.Where(price => price.SymbolAsset == ledge.Asset).AsParallel().ForAll(pair => GetTrades(pair)))).Start();
+        }
+
+        private void GetLedgerHistory()
+        {
+            if (Ledger == null) return;
+
+            //new Task(() => Ledger.AsParallel().ForAll(ledge =>
+            //{
+            //    var pair = AllPrices.Where(price => price.SymbolAsset == ledge.Asset && price.SymbolCurrency == "BTC").FirstOrDefault();
+            //    if (pair != null)
+            //    {
+            //        ledge.MACDBTC = "Aquiring";
+            //        ledge.RSIBTC = "Aquiring";
+            //        pair.GetHistory(storage);
+            //        ledge.MACDBTC = pair.MACDStatus;
+            //        ledge.RSIBTC = pair.RSIStatus;
+            //    }
+            //})).Start();
+
+            //Takes a lot longer to load when in parallel
+            foreach(var ledge in Ledger)
             {
-                // Get trading pairs for this asset
-                foreach (var currency in tradingCurrencies)
-                {
-                    if (currency == ledge.Asset) continue;
-
-                    //Note this pair may not be valid, especially for BNB and USDT
-                    var tradePair = $"{ledge.Asset}{currency}";
-                    var bSymbol = AllPrices.Where(pair => pair.Symbol == tradePair).FirstOrDefault();
-
-                    if (bSymbol is null) continue;
-
-                    GetTrades(bSymbol);
-                }
+                var pair = AllPrices.Where(price => price.SymbolAsset == ledge.Asset && price.SymbolCurrency == "BTC").FirstOrDefault();
+                if (pair == null) continue;
+                pair.GetHistory(storage);
+                ledge.MACDBTC = pair.MACDStatus;
+                ledge.RSIBTC = pair.RSIStatus;
             }
+        }
 
-            foreach (var ledge in Ledger)
-            {
-                // Get BTC pair for this asset
-
-                if ("BTC" == ledge.Asset) continue;
-
-                var tradePair = $"{ledge.Asset}BTC";
-                var bSymbol = AllPrices.Where(pair => pair.Symbol == tradePair).FirstOrDefault();
-
-                if (bSymbol is null) continue;
-
-                bSymbol.GetHistory(storage);
-
-                ledge.MACDBTC = bSymbol.MACDStatus;
-                ledge.RSIBTC = bSymbol.RSIStatus;
-            }
+        private void GetAllHistory(string currency = null)
+        {
+            var t = new Task(() => AllPrices.Where(p => string.IsNullOrWhiteSpace(currency) || p.SymbolCurrency == currency).AsParallel().ForAll(pair => pair.GetHistory(storage)));
+            t.Start();
+            t.Wait();
         }
 
 
