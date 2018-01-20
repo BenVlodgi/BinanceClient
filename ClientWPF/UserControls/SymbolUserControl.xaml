@@ -25,10 +25,13 @@
             <RowDefinition Height="*"></RowDefinition>
         </Grid.RowDefinitions>
 
-        <TextBlock Padding="10 10 10 0">
-            <Run FontSize="18" FontWeight="Bold" Text="{Binding SelectedSymbol.Symbol }" ></Run>
-            <Run FontSize="14" Text="{Binding SelectedSymbol.Price, StringFormat={} {0:N8}}" ></Run>
-        </TextBlock>
+        <StackPanel Orientation="Horizontal" Grid.ColumnSpan="2">
+            <ComboBox ItemsSource="{Binding SelectedSymbolAssetOptions}" SelectedItem="{Binding SelectedSymbolAsset, Mode=TwoWay}" Width="80" VerticalAlignment="Center" />
+            <ComboBox ItemsSource="{Binding SelectedSymbolCurrencyOptions}" SelectedItem="{Binding SelectedSymbolCurrency, Mode=TwoWay}" Width="80" VerticalAlignment="Center" />
+            <TextBlock VerticalAlignment="Center" Padding="10"> <Hyperlink NavigateUri="{Binding SelectedSymbol.BinanceTradeURL}" RequestNavigate="Hyperlink_RequestNavigate">Basic Exchange</Hyperlink></TextBlock>
+            <TextBlock VerticalAlignment="Center" Padding="0,10"> <Hyperlink NavigateUri="{Binding SelectedSymbol.BinanceTradeDetailURL}" RequestNavigate="Hyperlink_RequestNavigate">Advanced Exchange</Hyperlink></TextBlock>
+            <TextBlock Padding="10"> <Run FontSize="14" Text="{Binding SelectedSymbol.Price, StringFormat={} {0:N8}}" ></Run> </TextBlock>
+        </StackPanel>
 
         <GroupBox Margin="5" Padding="5 0" Grid.Row="1">
             <GroupBox.Header>
@@ -132,7 +135,7 @@
                 </DataGrid.Columns>
             </DataGrid>
         </GroupBox>
-        
+
         <GroupBox Grid.Row="4" Grid.ColumnSpan="2">
             <GroupBox.Header>
                 <TextBlock Text="Trade history" FontSize="20"></TextBlock>
